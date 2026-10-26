@@ -1511,7 +1511,7 @@ async function loadWhatsAppMetrics(){
   whatsappState='loading';
   try {
     const {data,error}=await withDashboardTimeout(supabaseClient.from('whatsapp_agent_metrics')
-      .select('client,period_start,period_end,observed_at,time_saved_seconds,contacts,messages,appointments,method,source')
+      .select('client,period_start,period_end,observed_at,time_saved_seconds,contacts,messages,appointments,actions_triggered,avg_messages_per_contact,trend,method,source')
       .eq('client',client).order('observed_at',{ascending:false}).limit(1).maybeSingle(),15000);
     if(client!==activeClientName || !userRole) return;
     if(error) throw error;
@@ -1537,23 +1537,30 @@ function formatSavedTime(seconds){
 }
 function renderWhatsAppPanel(){
   const row=whatsappState==='ready'?whatsappSnapshot:null;
-  const date=v=>{const d=new Date(v);return Number.isNaN(d.getTime())?'—':d.toLocaleString('fr-FR',{timeZone:'America/Martinique'});};
-  const number=v=>v===null || v===undefined?'—':escapeHtml(String(v));
-  const stale=row && Date.now()-new Date(row.observed_at).getTime()>86400000;
-  const status=whatsappState==='loading'?'Chargement…':row?(stale?'Relevé à actualiser':'Dernier relevé disponible'):
-    whatsappState==='empty'?'Aucun relevé enregistré':'Synchronisation à connecter ou accès indisponible';
-  return `<section class="card" style="margin:16px 0" aria-label="Activité WhatsApp">
-    <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap">
-      <div><div class="panel-title">Agent WhatsApp · ${escapeHtml(activeClientName)}</div><div class="panel-sub">${status}</div></div>
-      <button type="button" onclick="refreshWhatsApp()" ${whatsappRefreshPending?'disabled':''} style="padding:8px 12px;border:1px solid #d3d7de;border-radius:8px;background:transparent;color:inherit;cursor:pointer">${whatsappRefreshPending?'Actualisation…':'Actualiser le relevé'}</button>
+  const date=v=>{const d=new Date(v);return Number.isNaN(d.getTime())?'—':d.toLocaleString('fr-FR',{timeZone:'America/Martinique',day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'});};
+  const day=v=>{const d=new Date(v+'T00:00:00');return Number.isNaN(d.getTime())?'—':d.toLocaleDateString('fr-FR');};
+  const num=v=>v===null||v===undefined?'—':Number(v).toLocaleString('fr-FR');
+  const hours=sec=>{ if(sec===null||sec===undefined||!Number.isFinite(Number(sec))) return '—'; const h=Number(sec)/3600; return h.toLocaleString('fr-FR',{minimumFractionDigits:2,maximumFractionDigits:2})+'<span class="kpi-unit">h</span>'; };
+  const tr=(row&&row.trend)||{};
+  const trend=k=>tr[k]?`<div class="kpi-sub ${String(tr[k]).trim().startsWith('+')?'up':''}">${String(tr[k]).trim().startsWith('-')?'▼':'▲'} ${escapeHtml(String(tr[k]).replace(/^[+]/,''))} vs mois dernier</div>`:'';
+  const stale=row && Date.now()-new Date(row.observed_at).getTime()>36*3600000;
+  const status=whatsappState==='loading'?'Chargement…':row?`Du ${day(row.period_start)} au ${day(row.period_end)} · relevé le ${date(row.observed_at)}${stale?' · à actualiser':''}`:
+    whatsappState==='empty'?'Aucun relevé enregistré pour ce client':'Relevé indisponible pour le moment';
+  const tile=(label,value,k)=>`<div class="card"><div class="kpi-label">${label}</div><div class="kpi-value">${value}</div>${trend(k)}</div>`;
+  return `<section style="margin:0 0 16px" aria-label="Agent IA WhatsApp">
+    <div style="display:flex;justify-content:space-between;align-items:flex-end;gap:12px;flex-wrap:wrap;margin-bottom:12px">
+      <div><div class="panel-title">Agent IA WhatsApp · ${escapeHtml(clientShort())}</div><div class="panel-sub" style="margin-bottom:0">${status}</div></div>
+      <button type="button" class="logout-btn" style="margin-left:0" onclick="refreshWhatsApp()" ${whatsappRefreshPending?'disabled':''}>${whatsappRefreshPending?'Actualisation…':'Actualiser'}</button>
     </div>
-    <div class="kpi-grid" style="margin-top:12px">
-      <div><div class="kpi-label">Temps gagné estimé</div><div class="kpi-value">${row?formatSavedTime(row.time_saved_seconds):'—'}</div></div>
-      <div><div class="kpi-label">Contacts accompagnés</div><div class="kpi-value">${row?number(row.contacts):'—'}</div></div>
-      <div><div class="kpi-label">Messages</div><div class="kpi-value">${row?number(row.messages):'—'}</div></div>
-      <div><div class="kpi-label">RDV attribués à l’agent</div><div class="kpi-value">${row?number(row.appointments):'—'}</div></div>
+    <div class="kpi-grid" style="grid-template-columns:repeat(3,1fr);margin-bottom:0">
+      ${tile('Contacts uniques',row?num(row.contacts):'—','contacts')}
+      ${tile('Actions déclenchées',row?num(row.actions_triggered):'—','actions')}
+      ${tile('Rendez-vous réservés',row?num(row.appointments):'—','appointments')}
+      ${tile('Temps gagné',row?hours(row.time_saved_seconds):'—','time_saved')}
+      ${tile('Messages',row?num(row.messages):'—','messages')}
+      ${tile('Messages par contact',row&&row.avg_messages_per_contact!=null?Number(row.avg_messages_per_contact).toLocaleString('fr-FR',{minimumFractionDigits:2,maximumFractionDigits:2}):'—','avg')}
     </div>
-    <p class="panel-sub" style="margin-top:14px">${row?`Période propre à ce relevé : ${escapeHtml(row.period_start)} au ${escapeHtml(row.period_end)} · Relevé du ${date(row.observed_at)} (Martinique).<br>Source : ${escapeHtml(row.source)} · Méthode : ${escapeHtml(row.method)}. Ce temps est une estimation, pas un chronométrage humain. Les relevés cumulés ne sont pas additionnés.`:'Les statistiques WhatsApp ne sont pas encore disponibles dans ce tableau de bord. Aucun zéro ni temps gagné fictif n’est affiché. Le bouton relit le dernier relevé enregistré ; il ne déclenche pas une collecte GHL.'}</p>
+    ${row?`<p class="panel-sub" style="margin:10px 0 0">Source : ${escapeHtml(row.source||'GoHighLevel')} · ${escapeHtml(row.method||'')}</p>`:''}
   </section>`;
 }
 

@@ -882,7 +882,11 @@ async function logout(){
   document.getElementById('loginPassAgence').value = '';
 }
 
+// Pages réservées à l'agence : indicateurs techniques (CPL, ROAS, tests du setter…) que le client n'a pas besoin de lire.
+const AGENCY_ONLY_PAGES=['acquisition','ventes','setter'];
 function applyRolePermissions(){
+  document.querySelectorAll('.nav-item[data-page]').forEach(i=>{ i.style.display = (userRole!=='agence' && AGENCY_ONLY_PAGES.includes(i.dataset.page)) ? 'none' : ''; });
+  if(userRole!=='agence' && AGENCY_ONLY_PAGES.includes(currentPage)) currentPage='overview';
   const viewToggle = document.querySelector('.view-toggle');
   const clientSelect = document.getElementById('clientSelect');
   const allClientNames = [activeClientName];
@@ -1226,6 +1230,7 @@ let selectedStartDate=new Date(2025,8,1);
 let selectedEndDate=new Date(2026,8,30);
 function fmtEUR(n){ return Math.round(n).toLocaleString('fr-FR')+' €'; }
 function fmtNum(n){ return Math.round(n).toLocaleString('fr-FR'); }
+function fmtEUR2(n){ return Number(n||0).toLocaleString('fr-FR',{minimumFractionDigits:2,maximumFractionDigits:2})+' €'; }
 
 /* ---- Date range state & filtering ---- */
 let rangeStart=0, rangeEnd=monthlyDataFull.length-1; // indices inclusive into monthlyDataFull
@@ -1363,7 +1368,7 @@ async function loadDashboardData(){
   const dates=rawDailyData.map(row=>row._date);
   if(!dashboardPeriodInitialized){
     selectedStartDate=new Date(Math.min(...dates));
-    selectedEndDate=new Date(Math.max(...dates));
+    { const m=new Date(Math.max(...dates)); const eom=new Date(m.getFullYear(),m.getMonth()+1,0); const today=new Date(); today.setHours(0,0,0,0); selectedEndDate = eom>today ? today : eom; } // période affichée jusqu'à aujourd'hui (ou fin du dernier mois)
     dashboardPeriodInitialized=true;
   }
   const firstMonth=new Date(selectedStartDate.getFullYear(),selectedStartDate.getMonth(),1);
@@ -1549,18 +1554,18 @@ function renderWhatsAppPanel(){
   const tile=(label,value,k)=>`<div class="card"><div class="kpi-label">${label}</div><div class="kpi-value">${value}</div>${trend(k)}</div>`;
   return `<section style="margin:0 0 16px" aria-label="Agent IA WhatsApp">
     <div style="display:flex;justify-content:space-between;align-items:flex-end;gap:12px;flex-wrap:wrap;margin-bottom:12px">
-      <div><div class="panel-title">Agent IA WhatsApp · ${escapeHtml(clientShort())}</div><div class="panel-sub" style="margin-bottom:0">${status}</div></div>
+      <div><div class="panel-title">Votre assistant WhatsApp · ${escapeHtml(clientShort())}</div><div class="panel-sub" style="margin-bottom:0">${status}</div></div>
       <button type="button" class="logout-btn" style="margin-left:0" onclick="refreshWhatsApp()" ${whatsappRefreshPending?'disabled':''}>${whatsappRefreshPending?'Actualisation…':'Actualiser'}</button>
     </div>
     <div class="kpi-grid" style="grid-template-columns:repeat(3,1fr);margin-bottom:0">
-      ${tile('Contacts uniques',row?num(row.contacts):'—','contacts')}
-      ${tile('Actions déclenchées',row?num(row.actions_triggered):'—','actions')}
-      ${tile('Rendez-vous réservés',row?num(row.appointments):'—','appointments')}
+      ${tile('Personnes accompagnées',row?num(row.contacts):'—','contacts')}
+      ${tile('Rendez-vous réservés par l’assistant',row?num(row.appointments):'—','appointments')}
       ${tile('Temps gagné',row?hours(row.time_saved_seconds):'—','time_saved')}
-      ${tile('Messages',row?num(row.messages):'—','messages')}
-      ${tile('Messages par contact',row&&row.avg_messages_per_contact!=null?Number(row.avg_messages_per_contact).toLocaleString('fr-FR',{minimumFractionDigits:2,maximumFractionDigits:2}):'—','avg')}
+      ${userRole==='agence'?tile('Messages échangés',row?num(row.messages):'—','messages'):''}
+      ${userRole==='agence'?tile('Actions déclenchées',row?num(row.actions_triggered):'—','actions'):''}
+      ${userRole==='agence'?tile('Messages par contact',row&&row.avg_messages_per_contact!=null?Number(row.avg_messages_per_contact).toLocaleString('fr-FR',{minimumFractionDigits:2,maximumFractionDigits:2}):'—','avg'):''}
     </div>
-    ${row?`<p class="panel-sub" style="margin:10px 0 0">Source : ${escapeHtml(row.source||'GoHighLevel')} · ${escapeHtml(row.method||'')}</p>`:''}
+    ${row&&userRole==='agence'?`<p class="panel-sub" style="margin:10px 0 0">Source : ${escapeHtml(row.source||'GoHighLevel')} · ${escapeHtml(row.method||'')}</p>`:''}
   </section>`;
 }
 
@@ -2161,7 +2166,7 @@ function renderInner(){
       content.innerHTML = renderOverview();
     }else{
       titleEl.textContent="Vue d'ensemble";
-      subEl.textContent=activeClientName+" · Données en cours de collecte";
+      subEl.textContent=activeClientName+" · Vos résultats en un coup d’œil";
       content.innerHTML = renderClientOverview();
     }
     return;
@@ -2309,6 +2314,9 @@ function renderOverview(){
   `;
 }
 
+// Échelle « ronde » adaptée aux valeurs (ex. 230 → 250, 1 700 → 2 000, 48 000 → 50 000)
+function niceMax(v){ if(!(v>0)) return 1; const e=Math.pow(10,Math.floor(Math.log10(v))); const f=v/e; const n=f<=1?1:f<=1.5?1.5:f<=2?2:f<=2.5?2.5:f<=3?3:f<=4?4:f<=5?5:f<=6?6:f<=8?8:10; return n*e; }
+function axisLabel(v){ return v>=1000 ? (Math.round(v/100)/10).toLocaleString('fr-FR')+'k' : Math.round(v).toLocaleString('fr-FR'); }
 function labelStep(n){ return n<=6 ? 1 : (n<=10 ? 2 : 2); }
 
 function monthBarChart(values, labels, color, opts){
@@ -2318,7 +2326,7 @@ function monthBarChart(values, labels, color, opts){
   const bw = (W-padL-10)/values.length*0.62;
   const step = (W-padL-10)/values.length;
   const sy = v => H-padB - (v/maxV)*(H-padB-padT);
-  const ticks=[0,0.25,0.5,0.75,1].map(f=>Math.round(maxV*f));
+  const ticks=[0,0.25,0.5,0.75,1].map(f=>maxV*f);
   const ls = labelStep(labels.length);
   return `<svg viewBox="0 0 ${W} ${H+26}" style="width:100%;height:320px;">
     ${ticks.map(v=>`<line x1="${padL}" y1="${sy(v)}" x2="${W-4}" y2="${sy(v)}" stroke="#1a1d23" stroke-width="1"/>
@@ -2388,11 +2396,11 @@ function monthDualLineChart(labels, valuesA,colorA,labelA,valuesB,colorB,labelB,
 
 function monthGroupedBarChart(labels, valuesA,colorA,labelA,valuesB,colorB,labelB){
   const W=980,H=260,padL=48,padB=26,padT=14;
-  const maxV=Math.ceil(Math.max(...valuesA,...valuesB)*1.1/10000)*10000 || 1;
+  const maxV=niceMax(Math.max(...valuesA,...valuesB)*1.05);
   const step=(W-padL-10)/valuesA.length;
   const bw=step*0.30;
   const sy=v=>H-padB-(v/maxV)*(H-padB-padT);
-  const ticks=[0,0.25,0.5,0.75,1].map(f=>Math.round(maxV*f));
+  const ticks=[0,0.25,0.5,0.75,1].map(f=>maxV*f);
   const ls = labelStep(labels.length);
   return `<div style="display:flex;align-items:center;gap:14px;margin-bottom:8px;font-size:12px;color:var(--text-dim);justify-content:flex-end;">
     <span><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${colorA};margin-right:5px;"></span>${labelA}</span>
@@ -2400,7 +2408,7 @@ function monthGroupedBarChart(labels, valuesA,colorA,labelA,valuesB,colorB,label
   </div>
   <svg viewBox="0 0 ${W} ${H+26}" style="width:100%;height:340px;">
     ${ticks.map(v=>`<line x1="${padL}" y1="${sy(v)}" x2="${W-4}" y2="${sy(v)}" stroke="#1a1d23" stroke-width="1"/>
-    <text x="4" y="${sy(v)+4}" fill="#5c6270" font-size="12">${Math.round(v/1000)}k</text>`).join('')}
+    <text x="4" y="${sy(v)+4}" fill="#5c6270" font-size="12">${axisLabel(v)}</text>`).join('')}
     ${valuesA.map((v,i)=>{
       const x=padL+i*step+step*0.14; const y=sy(v);
       return `<rect class="chart-hit chart-pop" data-tip="${labels[i]} — ${labelA}: <b>${fmtNum(v)}</b>" x="${x}" y="${y}" width="${bw}" height="${H-padB-y}" rx="3" fill="${colorA}"/>`;
@@ -2437,73 +2445,50 @@ function donutGeneric(segments, centerLabel, centerSub){
 function renderClientOverview(){
   const {data, labels} = getRangeData();
   const tot = computeTotals(data);
-  const last = data[data.length-1];
-  const periodLabel = labels.length>1 ? (labels[0]+' à '+labels[labels.length-1]) : labels[0];
+  const last = data[data.length-1] || {pipeline:0};
+  const periodLabel = labels.length>1 ? (labels[0]+' → '+labels[labels.length-1]) : (labels[0]||'');
+  const wa = whatsappState==='ready' ? whatsappSnapshot : null;
+  const hours = wa && wa.time_saved_seconds!=null ? (Number(wa.time_saved_seconds)/3600).toLocaleString('fr-FR',{maximumFractionDigits:1}) : null;
+  const big=(label,value,sub,color)=>`<div class="card"><div class="kpi-label">${label}</div><div class="kpi-value"${color?` style="color:${color}"`:''}>${value}</div><div class="kpi-sub">${sub}</div></div>`;
   return `
-  ${renderWhatsAppPanel()}
+  <div class="banner">
+    <div class="banner-icon">📈</div>
+    <div class="banner-text">Voici l'essentiel de votre activité sur la période <b>${escapeHtml(periodLabel)}</b> : ce qui a été investi en publicité, les demandes reçues et les rendez-vous obtenus pour vous.</div>
+  </div>
+
   <div class="kpi-grid">
-    <div class="card"><div class="kpi-label">CA total</div><div class="kpi-value">${fmtEUR(tot.ca)}</div></div>
-    <div class="card"><div class="kpi-label">Leads total</div><div class="kpi-value">${fmtNum(tot.leads)}</div></div>
-    <div class="card"><div class="kpi-label">CPL moyen</div><div class="kpi-value">${tot.cpl} €</div></div>
-    <div class="card"><div class="kpi-label">ROAS cumulé</div><div class="kpi-value">${tot.ca?tot.roas+'x':'—'}</div>${tot.ca?'':'<div class="kpi-sub">Aucune vente enregistrée</div>'}</div>
+    ${big('Investi en publicité', fmtEUR2(tot.ads), 'Facebook et Instagram')}
+    ${big('Demandes reçues', fmtNum(tot.leads), 'Personnes intéressées par votre offre')}
+    ${big('Coût d’une demande', tot.leads?fmtEUR2(tot.ads/tot.leads):'—', 'Budget pub ÷ demandes reçues')}
+    ${big('Rendez-vous obtenus', fmtNum(tot.appointments), tot.appointments?('Soit '+fmtEUR2(tot.ads/tot.appointments)+' par rendez-vous'):'Réservés dans votre agenda')}
   </div>
-  <div class="kpi-grid" style="margin-top:14px;">
-    <div class="card"><div class="kpi-label">Coût par appel qualifié</div><div class="kpi-value">${tot.qualifiedCalls?fmtEUR(tot.costQualifiedCall):'—'}</div><div class="kpi-sub">${tot.qualifiedCalls?tot.qualifiedCalls+' appels qualifiés':'Appels qualifiés pas encore suivis'}</div></div>
-    <div class="card"><div class="kpi-label">ROI publicitaire</div><div class="kpi-value">${tot.ca?tot.roi+'%':'—'}</div><div class="kpi-sub">${tot.ca?'(CA attribué − Ads) ÷ Ads':'Calculé dès la première vente'}</div></div>
-    <div class="card"><div class="kpi-label">${escapeHtml(saleLabel())}</div><div class="kpi-value">${tot.deals}</div></div>
-    <div class="card"><div class="kpi-label">Coût par vente</div><div class="kpi-value">${tot.deals?fmtEUR(tot.costDeal):'—'}</div></div>
-  </div>
-  <div class="kpi-grid" style="margin-top:14px;grid-template-columns:repeat(2,1fr);">
-    <div class="card"><div class="kpi-label">Pipeline en cours</div><div class="kpi-value">${last.pipeline}<span class="kpi-unit">en cours</span></div></div>
-    <div class="card"><div class="kpi-label">Tâches IA total</div><div class="kpi-value">${fmtNum(tot.ia)}</div></div>
+  <div class="kpi-grid" style="margin-top:14px;grid-template-columns:repeat(3,1fr);">
+    ${big(escapeHtml(saleLabel()), fmtNum(tot.deals), tot.ca?('Chiffre d’affaires : '+fmtEUR(tot.ca)):'Dès qu’une vente est signée, elle apparaît ici')}
+    ${big('Projets en cours', fmtNum(last.pipeline||0), 'Clients en discussion avec vous')}
+    ${big('Temps gagné par l’assistant', hours!==null?hours+'<span class="kpi-unit">h</span>':'—', wa?(fmtNum(wa.contacts||0)+' personnes accompagnées sur WhatsApp ce mois-ci'):'Assistant WhatsApp')}
   </div>
 
   <div class="card" style="margin-top:14px;">
-    <div class="panel-title">Évolution du chiffre d'affaires</div>
-    <div class="panel-sub">CA mensuel généré vs budget investi en Ads — ${periodLabel}</div>
-    ${monthGroupedBarChart(labels, data.map(d=>d.ca),'#5B82D4','CA mensuel', data.map(d=>d.ads),'#e2694a','Budget Ads')}
+    <div class="panel-title">Publicité et demandes reçues, mois par mois</div>
+    <div class="panel-sub">En bleu : le budget investi · en vert : les demandes reçues</div>
+    ${monthGroupedBarChart(labels, data.map(d=>d.ads),'#5B82D4','Investi en publicité (€)', data.map(d=>d.leads),'#4fb87a','Demandes reçues')}
   </div>
 
   <div class="card" style="margin-top:14px;">
-    <div class="panel-title">Leads par mois</div>
-    <div class="panel-sub">Volume de leads générés</div>
-    ${monthBarChart(data.map(d=>d.leads), labels, '#4fb87a')}
-  </div>
-  <div class="card" style="margin-top:14px;">
-    <div class="panel-title">ROAS & CPL</div>
-    <div class="panel-sub">Retour sur ad spend vs coût par lead</div>
-    ${monthDualLineChart(labels, data.map(d=>d.roas),'#4bb6c9','ROAS', data.map(d=>d.cpl),'#e2984a','CPL',{fmtA:v=>v.toFixed(2)+'x',fmtB:v=>Math.round(v)+' €'})}
-  </div>
-
-  <div class="card" style="margin-top:14px;">
-    <div class="panel-title">Détail mensuel</div>
+    <div class="panel-title">Le mois en détail</div>
     <div style="overflow-x:auto;">
-    <table class="contracts-table" style="min-width:920px;">
-      <thead><tr>
-        <th>Mois</th><th>Phase</th><th>CA</th><th>Ads</th><th>ROAS</th><th>ROI</th><th>Leads</th><th>CPL</th><th>Appels qualifiés</th><th>Coût/appel qualifié</th><th>Ventes</th><th>Coût/vente</th><th>Panier</th><th>Conv</th><th>Pipeline</th><th>Google</th><th>Fidélisés</th><th>IA tâches</th>
-      </tr></thead>
+    <table class="contracts-table" style="min-width:560px;">
+      <thead><tr><th>Mois</th><th>Investi en pub</th><th>Demandes reçues</th><th>Coût d’une demande</th><th>Rendez-vous</th><th>${escapeHtml(saleLabel())}</th></tr></thead>
       <tbody>
         ${data.map((d,i)=>`
           <tr>
             <td style="font-weight:700;">${labels[i]}</td>
-            <td><span class="freq-tag" style="text-transform:capitalize;">${d.phase}</span></td>
-            <td>${fmtEUR(d.ca)}</td>
-            <td>${fmtEUR(d.ads)}</td>
-            <td style="color:#7be3a3;font-weight:700;">${d.roas.toFixed(2)}x</td>
-            <td>${d.roi.toFixed(1)}%</td>
+            <td>${fmtEUR2(d.ads)}</td>
             <td>${d.leads}</td>
-            <td>${d.cpl} €</td>
-            <td>${d.qualifiedCalls}</td>
-            <td>${fmtEUR(d.costQualifiedCall)}</td>
+            <td>${d.leads?fmtEUR2(d.ads/d.leads):'—'}</td>
+            <td>${d.appointments||0}</td>
             <td>${d.deals}</td>
-            <td>${fmtEUR(d.costDeal)}</td>
-            <td>${fmtEUR(d.panier)}</td>
-            <td>${d.conv.toFixed(1)}%</td>
-            <td>${d.pipeline}</td>
-            <td>${d.google.toFixed(1)}★</td>
-            <td>${d.maint}</td>
-            <td>${d.ia}</td>
-          </tr>`).join('')}
+          </tr>`).slice().reverse().join('')}
       </tbody>
     </table>
     </div>

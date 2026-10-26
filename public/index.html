@@ -666,6 +666,11 @@
   }
   .logout-btn:hover{color:var(--text);border-color:#33394a;}
   .app-shell{display:flex;min-height:100vh;width:100%;}
+  /* ---- Mise à jour en direct ---- */
+  @keyframes livePulse{0%{box-shadow:0 0 0 0 rgba(123,227,163,.55);}100%{box-shadow:0 0 0 10px rgba(123,227,163,0);}}
+  .pill.updated{animation:livePulse 1.2s ease-out 2;border-color:rgba(123,227,163,.5);color:#7be3a3;}
+  .kpi-value.changed{animation:valueFlash 1.4s ease-out;}
+  @keyframes valueFlash{0%{color:#7be3a3;}100%{color:inherit;}}
 </style>
 </head>
 <body>
@@ -2029,7 +2034,92 @@ document.querySelectorAll('.nav-item[data-page]').forEach(item=>{
   });
 });
 
+/* ============ ANIMATIONS ============ */
+let lastAnimatedPage=null, lastContentSignature='';
+const reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 function render(){
+  renderInner();
+  const content=document.getElementById('content');
+  if(!content || document.getElementById('appShell').style.display==='none') return;
+  const pageKey=currentPage+'|'+currentView+'|'+activeClientName;
+  const signature=(content.textContent||'').replace(/\s+/g,' ');
+  const pageChanged = pageKey!==lastAnimatedPage;
+  const dataChanged = !pageChanged && signature!==lastContentSignature;
+  const now=Date.now();
+  lastAnimatedPage=pageKey; lastContentSignature=signature;
+  if(pageChanged) lastPageChangeAt=now;
+  if(reduceMotion) return;
+  if(pageChanged) animateContent(content,true);
+  else if(dataChanged){
+    if(now-lastUserInteractionAt<800) return;            // clic de l'utilisateur (ex. ouvrir un pilier) : pas d'effet "mise à jour"
+    if(now-lastPageChangeAt<3000) animateContent(content,true); // premières données arrivées juste après l'ouverture de la page
+    else { animateContent(content,false); flashUpdated(); }    // vraie mise à jour en direct
+  }
+}
+let lastPageChangeAt=0, lastUserInteractionAt=0;
+document.addEventListener('click',()=>{ lastUserInteractionAt=Date.now(); },true);
+document.addEventListener('change',()=>{ lastUserInteractionAt=Date.now(); },true);
+function flashUpdated(){
+  const pill=document.getElementById('dataFreshness'); if(!pill) return;
+  pill.classList.remove('updated'); void pill.offsetWidth; pill.classList.add('updated');
+}
+function animateContent(root, full){
+  const ease='cubic-bezier(.22,.8,.3,1)';
+  if(full){
+    root.querySelectorAll('.card, .pillar-tile, .detail-block, .banner, .proof-item').forEach((el,i)=>{
+      el.animate([{opacity:0,transform:'translateY(10px)'},{opacity:1,transform:'none'}],{duration:450,delay:Math.min(i,12)*40,easing:ease,fill:'backwards'});
+    });
+  }
+  // Courbes : tracé progressif
+  root.querySelectorAll('svg path').forEach(path=>{
+    const fill=path.getAttribute('fill');
+    if(fill && fill!=='none'){ path.animate([{opacity:0},{opacity:path.getAttribute('opacity')||1}],{duration:900,delay:300,easing:ease,fill:'backwards'}); return; }
+    if(!path.getAttribute('stroke')) return;
+    let len=0; try{ len=path.getTotalLength(); }catch(e){}
+    if(!len) return;
+    if(path.getAttribute('stroke-dasharray')){ path.animate([{opacity:0},{opacity:1}],{duration:900,delay:200,easing:ease,fill:'backwards'}); return; }
+    path.animate([{strokeDasharray:len+' '+len,strokeDashoffset:len},{strokeDasharray:len+' '+len,strokeDashoffset:0}],{duration:1100,delay:150,easing:ease,fill:'backwards'});
+  });
+  // Barres : montée depuis l'axe
+  root.querySelectorAll('svg rect.chart-hit').forEach((r,i)=>{
+    r.style.transformBox='fill-box'; r.style.transformOrigin='center bottom';
+    r.animate([{transform:'scaleY(0)'},{transform:'scaleY(1)'}],{duration:700,delay:100+Math.min(i,24)*35,easing:ease,fill:'backwards'});
+  });
+  // Points et anneaux
+  root.querySelectorAll('svg circle').forEach((c,i)=>{
+    c.animate([{opacity:0},{opacity:1}],{duration:400,delay:700+Math.min(i,30)*20,easing:ease,fill:'backwards'});
+  });
+  // Barres de progression
+  root.querySelectorAll('.progress-bar-fill').forEach(b=>{
+    const w=b.style.width||'0%';
+    b.animate([{width:'0%'},{width:w}],{duration:900,delay:200,easing:ease,fill:'backwards'});
+  });
+  // Chiffres clés : défilement jusqu'à la valeur
+  root.querySelectorAll('.kpi-value, .detail-count .n').forEach(el=>{
+    const node=[...el.childNodes].find(n=>n.nodeType===3 && /\d/.test(n.textContent));
+    if(!node) return;
+    const original=node.textContent;
+    const m=original.match(/^(\D*?)(-?\d(?:[\d\s\u202f\u00a0]*\d)?(?:[.,]\d+)?)(.*)$/s);
+    if(!m) return;
+    const numStr=m[2].replace(/[\s\u202f\u00a0]/g,'');
+    const decimals=(numStr.split(/[.,]/)[1]||'').length;
+    const target=parseFloat(numStr.replace(',','.'));
+    if(!Number.isFinite(target) || target===0) return;
+    const usesComma=/,/.test(m[2]);
+    const fmt=v=>{ let t=v.toLocaleString('fr-FR',{minimumFractionDigits:decimals,maximumFractionDigits:decimals}); if(!usesComma && decimals) t=t.replace(',', '.'); if(!/[\s\u202f\u00a0]/.test(m[2])) t=t.replace(/[\s\u202f\u00a0]/g,''); return t; };
+    if(!full) el.classList.remove('changed'), void el.offsetWidth, el.classList.add('changed');
+    const start=performance.now(), dur=full?1100:700;
+    const step=now=>{
+      if(!node.isConnected) return;
+      const k=Math.min(1,(now-start)/dur), e=1-Math.pow(1-k,3);
+      node.textContent = k<1 ? m[1]+fmt(target*e)+m[3] : original;
+      if(k<1) requestAnimationFrame(step);
+    };
+    requestAnimationFrame(step);
+  });
+}
+
+function renderInner(){
   const content=document.getElementById('content');
   const titleEl=document.getElementById('pageTitle');
   const subEl=document.getElementById('pageSub');

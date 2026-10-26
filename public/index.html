@@ -724,9 +724,9 @@
     <div class="client-icon">🏠</div>
     <div class="client-meta">
       <select id="clientSelect" onchange="setClient(this.value)">
-        <option selected>RAV Distribution Automobiles</option>
+        <option selected>—</option>
       </select>
-      <div class="client-sub">Client actif · high ticket</div>
+      <div class="client-sub" id="clientSub">Client actif</div>
     </div>
   </div>
 
@@ -760,7 +760,7 @@
     </div>
     <div class="topbar-right">
       <div class="pill date-pill" id="datePillBtn" onclick="toggleDatePicker(event)">📅 <span id="dateRangeLabel">01/03/2025 — 31/03/2026</span> <span style="opacity:.6;">▾</span></div>
-      <div class="pill">Sources configurées : Meta · GHL — disponibilité à vérifier</div>
+      <div class="pill" id="dataFreshness" title="Date de la dernière donnée enregistrée pour ce client">Données : chargement…</div>
       <div class="pill live"><span class="dot"></span> Live</div>
       <button type="button" class="logout-btn" onclick="logout()">Déconnexion</button>
       <div class="date-picker-panel" id="datePickerPanel" onclick="event.stopPropagation()"></div>
@@ -777,7 +777,11 @@ const SUPABASE_URL = 'https://camezagvyeavzpyvofvk.supabase.co';
 const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_6S0P9Bc3Z2LqbbiR8hd1AA_FgLCn18m';
 const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
 /* ============ AUTH SUPABASE ============ */
-let activeClientName = 'RAV Distribution Automobiles';
+let activeClientName = '';
+let clientsList = [];          // lignes de la table clients visibles par l'utilisateur
+let activeClientRow = null;    // configuration du client affiché
+function saleLabel(){ const c=activeClientRow&&activeClientRow.config; return (c&&c.sale_label)||'Ventes conclues'; }
+function clientShort(){ return (activeClientRow && (activeClientRow.short_name||activeClientRow.name)) || activeClientName || 'le client'; }
 let userRole = null; // 'client' | 'agence'
 let realtimeSubscribed = false;
 
@@ -833,7 +837,7 @@ async function attemptLogin(role){
     return;
   }
   userRole=profile.role;
-  activeClientName=profile.client || 'RAV Distribution Automobiles';
+  activeClientName=profile.client || '';
   document.getElementById('loginGate').style.display = 'none';
   const shell = document.getElementById('appShell');
   shell.style.display = 'flex';
@@ -860,6 +864,7 @@ async function attemptLogin(role){
 }
 
 async function logout(){
+  clientsList=[]; activeClientRow=null; activeClientName='';
   whatsappSnapshot=null; whatsappState='unavailable';
   clearInterval(whatsappPoll); whatsappPoll=null;
   await supabaseClient.removeAllChannels(); realtimeSubscribed=false;
@@ -895,7 +900,7 @@ function applyRolePermissions(){
 
 /* ============ DATA ============ */
 
-const pillars = [
+let pillars = [
   {
     id:'offre', tag:'OFFRE', accent:'var(--blue)', icon:'💡',
     label:'Véhicules', label2:'Pricing',
@@ -1193,6 +1198,7 @@ const pillars = [
     ]
   }
 ];
+const defaultPillars = JSON.parse(JSON.stringify(pillars)); // contenu par défaut, remplacé par clients.config.pillars si défini
 
 // Le catalogue ci-dessus décrit le système prévu. Une automation n'est affichée
 // comme vérifiée que lorsqu'une preuve réelle remonte de Supabase.
@@ -1200,10 +1206,8 @@ pillars.forEach(p=>p.automations.forEach(a=>{ a.verified=false; a.res='Aucune ex
 
 // Agency-level (Vue Agence) data
 const agency = {
-  ca:'0 €', clients:1, panier:'0 €', part:'2 % HT',
-  contracts:[
-    {n:'RAV Distribution Automobiles',sub:'Client actif',f:'2 % HT',v:0,setup:'0 €',m:'0 €'}
-  ]
+  ca:'0 €', clients:0, panier:'0 €', part:'—', monthly:'0 €', setup:'0 €',
+  contracts:[]
 };
 
 // Valeurs initiales réelles : aucune performance confirmée enregistrée.
@@ -1236,7 +1240,7 @@ function getRangeData(){
       if(!buckets.has(key)) buckets.set(key,{phase:row.phase,ca:0,ads:0,leads:0,qualifiedCalls:0,appointments:0,attendedAppointments:0,deals:0,pipeline:0,google:0,maint:0,ia:0,_date:row._date});
       const b=buckets.get(key);
       b.ca+=row.ca; b.ads+=row.ads; b.leads+=row.leads; b.qualifiedCalls+=row.qualifiedCalls;
-      b.appointments+=row.appointments; b.attendedAppointments+=row.attendedAppointments;
+      b.appointments+=row.appointments; b.attendedAppointments+=row.attendedAppointments; b.attendedKnown=b.attendedKnown||row.attendedKnown; b.knownAppointments=(b.knownAppointments||0)+(row.knownAppointments||0);
       b.deals+=row.deals; b.ia+=row.ia;
       b.pipeline=row.pipeline; b.google=row.google; b.maint=row.maint; b.phase=row.phase; b._date=row._date;
     });
@@ -1269,6 +1273,8 @@ function computeTotals(data){
     qualifiedCalls: data.reduce((s,d)=>s+(d.qualifiedCalls||0),0),
     appointments: data.reduce((s,d)=>s+(d.appointments||0),0),
     attendedAppointments: data.reduce((s,d)=>s+(d.attendedAppointments||0),0),
+    attendedKnown: data.some(d=>d.attendedKnown),
+    knownAppointments: data.reduce((s,d)=>s+(d.knownAppointments||0),0),
     deals: data.reduce((s,d)=>s+d.deals,0),
     ia: data.reduce((s,d)=>s+d.ia,0)
   };
@@ -1277,8 +1283,8 @@ function computeTotals(data){
   t.cpl = t.leads ? Math.round(t.ads/t.leads) : 0;
   t.costQualifiedCall = t.qualifiedCalls ? Math.round(t.ads/t.qualifiedCalls) : 0;
   t.appointmentRate = t.leads ? (t.appointments/t.leads*100).toFixed(1) : '0.0';
-  t.showRate = t.appointments ? (t.attendedAppointments/t.appointments*100).toFixed(1) : '0.0';
-  t.noShowRate = t.appointments ? ((t.appointments-t.attendedAppointments)/t.appointments*100).toFixed(1) : '0.0';
+  t.showRate = t.knownAppointments ? (t.attendedAppointments/t.knownAppointments*100).toFixed(1) : null;
+  t.noShowRate = t.knownAppointments ? ((t.knownAppointments-t.attendedAppointments)/t.knownAppointments*100).toFixed(1) : null;
   t.costDeal = t.deals ? Math.round(t.ads/t.deals) : 0;
   t.conv = t.leads ? (t.deals/t.leads*100).toFixed(1) : '0.0';
   return t;
@@ -1307,6 +1313,7 @@ async function loadDashboardData(){
 
   // Tant que la table est vide, la démonstration existante reste visible.
   if(!data || data.length===0){
+    updateFreshness([]);
     console.info('Supabase est connecté, mais aucune donnée client n’est encore enregistrée.');
     return false;
   }
@@ -1317,7 +1324,9 @@ async function loadDashboardData(){
     const leads = Number(row.leads || 0);
     const qualifiedCalls = Number(row.qualified_calls || 0);
     const appointments = Number(row.appointments || 0);
-    const attendedAppointments = Number(row.attended_appointments || 0);
+    // Présence connue seulement si des RDV existent ET que la présence a été relevée (null = pas encore mesurée).
+    const attendedKnown = row.attended_appointments!==null && row.attended_appointments!==undefined && Number(row.appointments||0)>0;
+    const attendedAppointments = attendedKnown ? Number(row.attended_appointments) : 0;
     const deals = Number(row.deals || 0);
     return {
       _date:new Date(row.periode+'T00:00:00'),
@@ -1332,6 +1341,8 @@ async function loadDashboardData(){
       costQualifiedCall: qualifiedCalls ? ads/qualifiedCalls : 0,
       appointments,
       attendedAppointments,
+      attendedKnown,
+      knownAppointments: attendedKnown ? appointments : 0,
       deals,
       costDeal: deals ? ads/deals : 0,
       panier: deals ? ca/deals : 0,
@@ -1358,12 +1369,7 @@ async function loadDashboardData(){
   if(monthMeta.length===1){ const d=new Date(firstMonth); d.setMonth(d.getMonth()-1); monthMeta.unshift({y:d.getFullYear(),m:d.getMonth()}); }
   monthLabelsFull=monthMeta.map(d=>shortMonths[d.m]+' '+String(d.y).slice(-2));
   monthlyDataFull=getRangeData().data;
-  const clientRevenueHT = rawDailyData.reduce((sum,row)=>sum+row.ca,0);
-  const confirmedDeals = rawDailyData.reduce((sum,row)=>sum+row.deals,0);
-  const agencyCommission = clientRevenueHT * 0.02;
-  agency.ca = fmtEUR(agencyCommission);
-  agency.panier = confirmedDeals ? fmtEUR(agencyCommission/confirmedDeals) : '0 €';
-  agency.contracts[0].m = fmtEUR(agencyCommission);
+  updateFreshness(data);
   rangeStart=0;
   rangeEnd=monthlyDataFull.length-1;
   calStart=new Date(selectedStartDate);
@@ -1468,6 +1474,13 @@ function subscribeToDashboardUpdates(){
   supabaseClient
     .channel('automation-logs-live')
     .on('postgres_changes',{event:'*',schema:'public',table:'automation_logs'},()=>loadAutomationLogs())
+    .subscribe();
+
+  supabaseClient.channel('clients-live')
+    .on('postgres_changes',{event:'*',schema:'public',table:'clients'},()=>loadClients())
+    .subscribe();
+  supabaseClient.channel('whatsapp-metrics-live')
+    .on('postgres_changes',{event:'*',schema:'public',table:'whatsapp_agent_metrics'},()=>loadWhatsAppMetrics())
     .subscribe();
 
   ['setter_daily_metrics','setter_changes','setter_leads'].forEach(t=>{
@@ -1663,7 +1676,72 @@ function renderSetterPage(){
   </div>`;
 }
 
+/* ============ CLIENTS (multi-clients) ============ */
+function applyClientConfig(){
+  activeClientRow = clientsList.find(c=>c.name===activeClientName) || null;
+  const cfg = (activeClientRow && activeClientRow.config) || {};
+  pillars = Array.isArray(cfg.pillars) && cfg.pillars.length ? JSON.parse(JSON.stringify(cfg.pillars)) : JSON.parse(JSON.stringify(defaultPillars));
+  const sub=document.getElementById('clientSub');
+  if(sub) sub.textContent = activeClientRow ? ((activeClientRow.sector||'Client')+' · '+(activeClientRow.status||'actif')) : 'Client';
+  const sel=document.getElementById('clientSelect');
+  if(sel){
+    const names = userRole==='agence' ? clientsList.map(c=>c.name) : [activeClientName];
+    sel.innerHTML = names.map(n=>`<option ${n===activeClientName?'selected':''}>${escapeHtml(n)}</option>`).join('');
+    sel.disabled = userRole!=='agence';
+  }
+}
+function updateFreshness(rows){
+  const el=document.getElementById('dataFreshness'); if(!el) return;
+  const ts=(rows||[]).map(r=>new Date(r.updated_at).getTime()).filter(Number.isFinite);
+  if(!ts.length){ el.textContent='Données : aucune pour ce client'; return; }
+  const last=new Date(Math.max(...ts));
+  const ageH=(Date.now()-last.getTime())/3600000;
+  el.textContent='Mis à jour le '+last.toLocaleString('fr-FR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit',timeZone:'America/Martinique'});
+  el.style.color = ageH>48 ? '#e2984a' : '';
+  el.title = ageH>48 ? 'Aucune nouvelle donnée depuis plus de 48 h : une synchronisation est peut-être en échec.' : 'Date de la dernière donnée enregistrée pour ce client';
+}
+async function loadClients(){
+  const {data,error}=await supabaseClient.from('clients').select('*').order('created_at',{ascending:true});
+  if(error){ console.error('Erreur clients :',error); clientsList=[]; }
+  else clientsList=data||[];
+  if(!activeClientName && clientsList.length) activeClientName=clientsList[0].name;
+  applyClientConfig();
+  if(userRole==='agence') await loadAgencyRollup();
+}
+async function loadAgencyRollup(){
+  const {data,error}=await supabaseClient.from('dashboard_metrics').select('client,ca,deals');
+  if(error){ console.error('Erreur synthèse agence :',error); return; }
+  let commission=0, deals=0, monthly=0, setup=0;
+  agency.contracts = clientsList.filter(c=>c.status!=='archivé').map(c=>{
+    const rows=(data||[]).filter(r=>r.client===c.name);
+    const ca=rows.reduce((s,r)=>s+Number(r.ca||0),0);
+    const d=rows.reduce((s,r)=>s+Number(r.deals||0),0);
+    const rate=Number(c.commission_rate||0);
+    commission+=ca*rate; deals+=d; monthly+=Number(c.monthly_fee||0); setup+=Number(c.setup_fee||0);
+    return {n:c.name, sub:(c.sector||'')+(c.status?' · '+c.status:''), f:(rate*100).toLocaleString('fr-FR',{maximumFractionDigits:2})+' % HT', setup:fmtEUR(Number(c.setup_fee||0)), m:fmtEUR(Number(c.monthly_fee||0))};
+  });
+  agency.clients = agency.contracts.length;
+  agency.ca = fmtEUR(commission);
+  agency.panier = deals ? fmtEUR(commission/deals) : '0 €';
+  const rates=[...new Set(clientsList.map(c=>Number(c.commission_rate||0)))];
+  agency.part = rates.length===1 ? (rates[0]*100).toLocaleString('fr-FR',{maximumFractionDigits:2})+' % HT' : 'Variable';
+  agency.monthly = fmtEUR(monthly); agency.setup = fmtEUR(setup);
+  render();
+}
+async function loadClientScopedData(){
+  await Promise.all([
+    loadDashboardData(),
+    loadCompetitiveIntelligence(),
+    loadAutomationLogs(),
+    loadConnectedSources(),
+    loadWhatsAppMetrics(),
+    loadSetterData()
+  ]);
+  render();
+}
+
 async function loadAllDashboardData(){
+  await loadClients();
   await Promise.all([
     loadDashboardData(),
     loadCompetitiveIntelligence(),
@@ -1919,9 +1997,15 @@ function finalizeDateChange(){
   render();
 }
 
-function setClient(name){
-  document.querySelector('.client-sub').textContent = 'Client actif · high ticket';
+async function setClient(name){
+  if(!name || name===activeClientName) return;
+  activeClientName=name;
+  applyClientConfig();
+  dashboardPeriodInitialized=false;
+  rawDailyData=[]; proofEntries=[]; cerveauSources=[];
+  whatsappSnapshot=null; setterMetrics=[]; setterChanges=[]; setterLeads=[]; setterState='loading';
   render();
+  await loadClientScopedData();
 }
 
 let currentView='client';
@@ -2067,7 +2151,7 @@ function revenueChart(){
 }
 
 function donutChart(){
-  const data=[{l:'Commission variable',sub:'2 % des ventes HT',amt:agency.contracts[0].m,c:'#5B82D4'},{l:'Mensuel fixe',sub:'aucun',amt:'0 €',c:'#4fb87a'},{l:'Setup encaissé',sub:'actuellement',amt:agency.contracts[0].setup,c:'#333'}];
+  const data=[{l:'Commission variable',sub:'sur les ventes HT',amt:agency.ca,c:'#5B82D4'},{l:'Mensuel fixe',sub:'contrats en cours',amt:agency.monthly,c:'#4fb87a'},{l:'Setup facturé',sub:'total',amt:agency.setup,c:'#333'}];
   return `<div class="donut-wrap">
     <svg width="110" height="110" viewBox="0 0 110 110">
       <circle cx="55" cy="55" r="42" fill="none" stroke="#22262e" stroke-width="14"/>
@@ -2082,17 +2166,16 @@ function donutChart(){
 
 function renderOverview(){
   return `
-  ${renderWhatsAppPanel()}
   <div class="card" style="display:flex;align-items:center;gap:16px;margin-bottom:16px;border-color:rgba(91,130,212,0.2);background:linear-gradient(90deg,rgba(91,130,212,0.05),transparent);">
     <div style="width:36px;height:36px;border-radius:10px;background:rgba(91,130,212,0.12);display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0;">🧬</div>
-    <div style="flex:1;font-size:13.5px;color:var(--text-dim);line-height:1.5;">Agence développée sur le modèle <b style="color:var(--text);">Acquisition Scale Partner</b> : peu de clients, high ticket. RAV Distribution Automobiles est le premier client accompagné.</div>
+    <div style="flex:1;font-size:13.5px;color:var(--text-dim);line-height:1.5;">Agence développée sur le modèle <b style="color:var(--text);">Acquisition Scale Partner</b> : peu de clients, high ticket. ${agency.clients} client${agency.clients>1?'s':''} accompagné${agency.clients>1?'s':''} actuellement.</div>
   </div>
 
   <div class="kpi-grid">
     <div class="card"><div class="kpi-label">Revenu agence</div><div class="kpi-value">${agency.ca}</div><div class="kpi-sub">Commission calculée sur les ventes HT · paiement non vérifié</div></div>
-    <div class="card"><div class="kpi-label">Clients actifs</div><div class="kpi-value">${agency.clients}</div><div class="kpi-sub">RAV Distribution Automobiles</div></div>
+    <div class="card"><div class="kpi-label">Clients actifs</div><div class="kpi-value">${agency.clients}</div><div class="kpi-sub">${escapeHtml(agency.contracts.map(c=>c.n).join(' · ')||'—')}</div></div>
     <div class="card"><div class="kpi-label">Commission moyenne par vente</div><div class="kpi-value">${agency.panier}</div><div class="kpi-sub">Sur les ventes confirmées</div></div>
-    <div class="card"><div class="kpi-label">Commission contractuelle</div><div class="kpi-value">${agency.part}</div><div class="kpi-sub">Prix HT du véhicule vendu</div></div>
+    <div class="card"><div class="kpi-label">Commission contractuelle</div><div class="kpi-value">${agency.part}</div><div class="kpi-sub">Sur le prix HT des ventes clients</div></div>
   </div>
 
   <div class="row2">
@@ -2101,7 +2184,7 @@ function renderOverview(){
       <div class="panel-sub">Aucune projection fictive · calcul sur les ventes HT confirmées</div>
       <div style="display:flex;align-items:center;justify-content:center;min-height:220px;flex-direction:column;gap:8px;">
         <div style="font-size:42px;font-weight:800;">${agency.ca}</div>
-        <div style="font-size:12px;color:var(--text-dim);">2 % du chiffre d'affaires HT des véhicules vendus</div>
+        <div style="font-size:12px;color:var(--text-dim);">Commission contractuelle de chaque client, appliquée à ses ventes HT confirmées</div>
       </div>
     </div>
     <div class="card">
@@ -2112,14 +2195,14 @@ function renderOverview(){
   </div>
 
   <div class="card" style="margin-top:14px;">
-    <div class="panel-title">Contrat</div>
+    <div class="panel-title">Contrats</div>
     <table class="contracts-table">
       <thead><tr><th>Client</th><th>Fixe / Variable</th><th>Setup facturé</th><th>Mensuel</th></tr></thead>
       <tbody>
         ${agency.contracts.map(c=>`
           <tr>
-            <td><div class="cname">${c.n}</div><div class="csub">${c.sub}</div></td>
-            <td style="color:var(--text-dim);font-size:12px;">${c.f} sur chaque véhicule vendu</td>
+            <td><div class="cname">${escapeHtml(c.n)}</div><div class="csub">${escapeHtml(c.sub)}</div></td>
+            <td style="color:var(--text-dim);font-size:12px;">${c.f} sur chaque vente</td>
             <td>${c.setup}</td>
             <td style="font-weight:700;">${c.m}</td>
           </tr>`).join('')}
@@ -2265,16 +2348,16 @@ function renderClientOverview(){
     <div class="card"><div class="kpi-label">CA total</div><div class="kpi-value">${fmtEUR(tot.ca)}</div></div>
     <div class="card"><div class="kpi-label">Leads total</div><div class="kpi-value">${fmtNum(tot.leads)}</div></div>
     <div class="card"><div class="kpi-label">CPL moyen</div><div class="kpi-value">${tot.cpl} €</div></div>
-    <div class="card"><div class="kpi-label">ROAS cumulé</div><div class="kpi-value">${tot.roas}x</div></div>
+    <div class="card"><div class="kpi-label">ROAS cumulé</div><div class="kpi-value">${tot.ca?tot.roas+'x':'—'}</div>${tot.ca?'':'<div class="kpi-sub">Aucune vente enregistrée</div>'}</div>
   </div>
   <div class="kpi-grid" style="margin-top:14px;">
-    <div class="card"><div class="kpi-label">Coût par appel qualifié</div><div class="kpi-value">${tot.costQualifiedCall} €</div><div class="kpi-sub">${tot.qualifiedCalls} appels qualifiés</div></div>
-    <div class="card"><div class="kpi-label">ROI publicitaire</div><div class="kpi-value">${tot.roi}%</div><div class="kpi-sub">(CA attribué − Ads) ÷ Ads</div></div>
-    <div class="card"><div class="kpi-label">Véhicules vendus</div><div class="kpi-value">${tot.deals}</div></div>
-    <div class="card"><div class="kpi-label">Coût par vente</div><div class="kpi-value">${tot.costDeal} €</div></div>
+    <div class="card"><div class="kpi-label">Coût par appel qualifié</div><div class="kpi-value">${tot.qualifiedCalls?fmtEUR(tot.costQualifiedCall):'—'}</div><div class="kpi-sub">${tot.qualifiedCalls?tot.qualifiedCalls+' appels qualifiés':'Appels qualifiés pas encore suivis'}</div></div>
+    <div class="card"><div class="kpi-label">ROI publicitaire</div><div class="kpi-value">${tot.ca?tot.roi+'%':'—'}</div><div class="kpi-sub">${tot.ca?'(CA attribué − Ads) ÷ Ads':'Calculé dès la première vente'}</div></div>
+    <div class="card"><div class="kpi-label">${escapeHtml(saleLabel())}</div><div class="kpi-value">${tot.deals}</div></div>
+    <div class="card"><div class="kpi-label">Coût par vente</div><div class="kpi-value">${tot.deals?fmtEUR(tot.costDeal):'—'}</div></div>
   </div>
   <div class="kpi-grid" style="margin-top:14px;grid-template-columns:repeat(2,1fr);">
-    <div class="card"><div class="kpi-label">Pipeline en cours</div><div class="kpi-value">${last.pipeline}<span class="kpi-unit">devis</span></div></div>
+    <div class="card"><div class="kpi-label">Pipeline en cours</div><div class="kpi-value">${last.pipeline}<span class="kpi-unit">en cours</span></div></div>
     <div class="card"><div class="kpi-label">Tâches IA total</div><div class="kpi-value">${fmtNum(tot.ia)}</div></div>
   </div>
 
@@ -2339,11 +2422,11 @@ function renderVentesPage(){
   return `
   <div class="kpi-grid" style="grid-template-columns:repeat(6,1fr);">
     <div class="card"><div class="kpi-label">CA total</div><div class="kpi-value" style="font-size:21px;">${fmtEUR(tot.ca)}</div></div>
-    <div class="card"><div class="kpi-label">Véhicules vendus</div><div class="kpi-value" style="font-size:21px;">${tot.deals}</div></div>
-    <div class="card"><div class="kpi-label">Panier moyen</div><div class="kpi-value" style="font-size:21px;">${fmtEUR(last.panier)}</div></div>
-    <div class="card"><div class="kpi-label">Coût par vente</div><div class="kpi-value" style="font-size:21px;">${tot.costDeal} €</div></div>
+    <div class="card"><div class="kpi-label">${escapeHtml(saleLabel())}</div><div class="kpi-value" style="font-size:21px;">${tot.deals}</div></div>
+    <div class="card"><div class="kpi-label">Panier moyen</div><div class="kpi-value" style="font-size:21px;">${tot.deals?fmtEUR(tot.ca/tot.deals):'—'}</div></div>
+    <div class="card"><div class="kpi-label">Coût par vente</div><div class="kpi-value" style="font-size:21px;">${tot.deals?fmtEUR(tot.costDeal):'—'}</div></div>
     <div class="card"><div class="kpi-label">Taux de conversion</div><div class="kpi-value" style="font-size:21px;">${tot.conv}%</div></div>
-    <div class="card"><div class="kpi-label">Pipeline en cours</div><div class="kpi-value" style="font-size:21px;">${last.pipeline}<span class="kpi-unit">devis</span></div></div>
+    <div class="card"><div class="kpi-label">Pipeline en cours</div><div class="kpi-value" style="font-size:21px;">${last.pipeline}<span class="kpi-unit">en cours</span></div></div>
   </div>
 
   <div class="card" style="margin-top:14px;">
@@ -2368,18 +2451,18 @@ function renderAcquisitionPage(){
   <div class="kpi-grid" style="grid-template-columns:repeat(4,1fr);">
     <div class="card"><div class="kpi-label">Leads totaux (période)</div><div class="kpi-value">${fmtNum(tot.leads)}</div></div>
     <div class="card"><div class="kpi-label">Leads dernier mois</div><div class="kpi-value">${fmtNum(last.leads)}</div></div>
-    <div class="card"><div class="kpi-label">CPL actuel</div><div class="kpi-value">${last.cpl} €</div></div>
+    <div class="card"><div class="kpi-label">CPL actuel</div><div class="kpi-value">${last.leads?last.cpl.toLocaleString('fr-FR',{minimumFractionDigits:2,maximumFractionDigits:2})+' €':'—'}</div></div>
     <div class="card"><div class="kpi-label">Budget Ads total</div><div class="kpi-value" style="font-size:20px;">${fmtEUR(tot.ads)}</div></div>
   </div>
   <div class="kpi-grid" style="margin-top:14px;grid-template-columns:repeat(4,1fr);">
-    <div class="card"><div class="kpi-label">ROAS actuel</div><div class="kpi-value">${last.roas.toFixed(2)}x</div></div>
-    <div class="card"><div class="kpi-label">ROI publicitaire</div><div class="kpi-value">${tot.roi}%</div><div class="kpi-sub">CA attribué après coût Ads</div></div>
-    <div class="card"><div class="kpi-label">Coût par appel qualifié</div><div class="kpi-value">${tot.costQualifiedCall} €</div><div class="kpi-sub">${tot.qualifiedCalls} appels qualifiés</div></div>
+    <div class="card"><div class="kpi-label">ROAS actuel</div><div class="kpi-value">${last.ca?last.roas.toFixed(2)+'x':'—'}</div></div>
+    <div class="card"><div class="kpi-label">ROI publicitaire</div><div class="kpi-value">${tot.ca?tot.roi+'%':'—'}</div><div class="kpi-sub">${tot.ca?'CA attribué après coût Ads':'Calculé dès la première vente'}</div></div>
+    <div class="card"><div class="kpi-label">Coût par appel qualifié</div><div class="kpi-value">${tot.qualifiedCalls?fmtEUR(tot.costQualifiedCall):'—'}</div><div class="kpi-sub">${tot.qualifiedCalls?tot.qualifiedCalls+' appels qualifiés':'Appels qualifiés pas encore suivis'}</div></div>
     <div class="card"><div class="kpi-label">Taux de prise de RDV</div><div class="kpi-value">${tot.appointmentRate}%</div><div class="kpi-sub">${tot.appointments} rendez-vous</div></div>
   </div>
   <div class="kpi-grid" style="margin-top:14px;grid-template-columns:repeat(2,1fr);">
-    <div class="card"><div class="kpi-label">Taux de présence</div><div class="kpi-value">${tot.showRate}%</div><div class="kpi-sub">${tot.attendedAppointments} rendez-vous tenus</div></div>
-    <div class="card"><div class="kpi-label">No-show rate</div><div class="kpi-value">${tot.noShowRate}%</div><div class="kpi-sub">Calculé sur les rendez-vous pris</div></div>
+    <div class="card"><div class="kpi-label">Taux de présence</div><div class="kpi-value">${tot.showRate===null?'—':tot.showRate+'%'}</div><div class="kpi-sub">${tot.showRate===null?'Présence aux RDV pas encore mesurée':tot.attendedAppointments+' rendez-vous tenus'}</div></div>
+    <div class="card"><div class="kpi-label">No-show rate</div><div class="kpi-value">${tot.noShowRate===null?'—':tot.noShowRate+'%'}</div><div class="kpi-sub">${tot.noShowRate===null?'Disponible dès les premiers retours de RDV':'Calculé sur les rendez-vous pris'}</div></div>
   </div>
 
   <div class="card" style="margin-top:14px;">
@@ -2450,12 +2533,12 @@ function renderPreuvesPage(){
   <div class="kpi-grid" style="grid-template-columns:repeat(3,1fr);">
     <div class="card"><div class="kpi-label">Piliers avec actions vérifiées</div><div class="kpi-value">${activePillars}<span class="kpi-unit">/5</span></div></div>
     <div class="card"><div class="kpi-label">Dernière action vérifiée</div><div class="kpi-value" style="font-size:16px;">${lastAction}</div></div>
-    <div class="card"><div class="kpi-label">Client accompagné</div><div class="kpi-value" style="font-size:18px;">RAV Distribution</div></div>
+    <div class="card"><div class="kpi-label">Client accompagné</div><div class="kpi-value" style="font-size:18px;">${escapeHtml(clientShort())}</div></div>
   </div>
 
   <div class="card" style="margin-top:14px;">
     <div class="panel-title">Journal des automations</div>
-    <div class="panel-sub">Chaque ligne est une action réelle exécutée par l'IA sur RAV Distribution Automobiles.</div>
+    <div class="panel-sub">Chaque ligne est une action réelle exécutée par l'IA pour ${escapeHtml(activeClientName)}.</div>
     <div class="proof-feed">
       ${proofEntries.length ? proofEntries.map(e=>`
         <div class="proof-item">
@@ -2480,7 +2563,7 @@ let cerveauSources=[];
 const cerveauOutputs=[
   {t:'Playbooks agence', c:'var(--orange)', d:'Structures d\'offre, grilles de prix setup / mensuel / % croissance, contrats types et scripts de cadrage.', freq:'Ce que ASP applique sur sa propre acquisition'},
   {t:'Bibliothèque d\'objections', c:'var(--green)', d:'Objections réelles issues des appels, avec les réponses qui ont converti et celles qui ont tué le deal.', freq:'Alimentée par chaque transcript déposé, au fur et à mesure'},
-  {t:'Créas et scripts', c:'var(--purple)', d:'Créas vidéo Meta Ads, VSL pré-RDV et post-réservation, script d\'appel de qualification — déjà produits pour RAV Distribution.', freq:'Réutilisés et affinés au fil des campagnes'},
+  {t:'Créas et scripts', c:'var(--purple)', d:'Créas vidéo Meta Ads, VSL pré-RDV et post-réservation, script d\'appel de qualification — produits pour chaque client et affinés au fil des campagnes.', freq:'Réutilisés et affinés au fil des campagnes'},
   {t:'Suivi des dossiers d\'import', c:'var(--blue)', d:'Historique des démarches administratives (douane, conformité, immatriculation) par véhicule.', freq:'Mis à jour à chaque dossier traité'}
 ];
 
@@ -2537,7 +2620,7 @@ function renderCerveau(){
   return `
   <div class="banner">
     <div class="banner-icon">🧠</div>
-    <div class="banner-text">Deux flux alimentent le vault. Les données de RAV Distribution Automobiles (ses outils, ses campagnes, ses leads) et, par-dessus, ce que <b>Acquisition Scale Partner</b> y déverse : nos playbooks internes déjà construits (agent WhatsApp, créas, scripts).</div>
+    <div class="banner-text">Deux flux alimentent le vault. Les données de ${escapeHtml(activeClientName)} (ses outils, ses campagnes, ses leads) et, par-dessus, ce que <b>Acquisition Scale Partner</b> y déverse : nos playbooks internes déjà construits (agent WhatsApp, créas, scripts).</div>
     <div class="banner-cta">En cours<div class="small">de démarrage</div></div>
   </div>
 
@@ -2562,7 +2645,7 @@ function renderCerveau(){
     <div class="card"><div class="kpi-label">Sources connectées vérifiées</div><div class="kpi-value">${cerveauSources.length}</div><div class="kpi-sub">Enregistrements Supabase</div></div>
     <div class="card"><div class="kpi-label">Bases Acquisition Scale Partner</div><div class="kpi-value">${cerveauOutputs.length}</div><div class="kpi-sub">Playbooks déjà construits</div></div>
     <div class="card"><div class="kpi-label">Actions IA vérifiées</div><div class="kpi-value">${proofEntries.length}</div><div class="kpi-sub">Journal réel</div></div>
-    <div class="card"><div class="kpi-label">Client accompagné</div><div class="kpi-value" style="font-size:18px;">RAV Distribution</div><div class="kpi-sub">Automobiles</div></div>
+    <div class="card"><div class="kpi-label">Client accompagné</div><div class="kpi-value" style="font-size:18px;">${escapeHtml(clientShort())}</div><div class="kpi-sub">${escapeHtml((activeClientRow&&activeClientRow.sector)||'')}</div></div>
   </div>
 
   <div class="card" style="margin-top:14px;">

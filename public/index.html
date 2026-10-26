@@ -1,0 +1,2722 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Acquisition Scale Partner</title>
+<style>
+  :root{
+    --bg:#08090c;
+    --panel:#101216;
+    --panel2:#15181d;
+    --border:#22262e;
+    --border-soft:#1a1d23;
+    --text:#eef0f3;
+    --text-dim:#9aa1ad;
+    --text-faint:#5c6270;
+    --blue:#5B82D4;
+    --orange:#e2984a;
+    --green:#4fb87a;
+    --purple:#a374e0;
+    --cyan:#4bb6c9;
+    --red:#e2694a;
+    font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{
+    background:var(--bg);
+    color:var(--text);
+    font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+    -webkit-font-smoothing:antialiased;
+    font-size:14px;
+    display:flex;
+    min-height:100vh;
+  }
+  ::selection{background:var(--blue);color:#fff;}
+
+  /* ---- Sidebar ---- */
+  .sidebar{
+    width:250px;
+    flex-shrink:0;
+    background:linear-gradient(180deg,#0c0d10,#08090c);
+    border-right:1px solid var(--border-soft);
+    display:flex;
+    flex-direction:column;
+    padding:20px 14px;
+    position:sticky;
+    top:0;
+    height:100vh;
+    overflow-y:auto;
+  }
+  .brand{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    padding:6px 6px 18px 6px;
+  }
+  .brand-mark{
+    width:32px;height:32px;border-radius:9px;
+    background:linear-gradient(135deg,var(--blue),#8aa8e8);
+    display:flex;align-items:center;justify-content:center;
+    font-weight:700;font-size:12px;color:#fff;
+    letter-spacing:.5px;
+    flex-shrink:0;
+  }
+  .brand-name{font-weight:600;font-size:14.5px;letter-spacing:-0.2px;}
+  .client-box{
+    background:var(--panel);
+    border:1px solid var(--border-soft);
+    border-radius:10px;
+    padding:11px 12px;
+    display:flex;
+    align-items:center;
+    gap:10px;
+    margin-bottom:22px;
+    cursor:pointer;
+    transition:border-color .15s;
+  }
+  .client-box:hover{border-color:#33394a;}
+  .client-icon{
+    width:26px;height:26px;border-radius:7px;
+    background:#1c2530;
+    display:flex;align-items:center;justify-content:center;
+    font-size:13px;flex-shrink:0;
+  }
+  .client-meta select{
+    background:none;border:none;color:var(--text);
+    font-size:12.5px;font-weight:600;
+    outline:none;cursor:pointer;
+    width:100%;
+  }
+  .client-meta option{background:#15181d;color:var(--text);}
+  .client-sub{font-size:10.5px;color:var(--text-faint);margin-top:1px;}
+
+  .view-toggle{
+    display:flex;
+    background:var(--panel);
+    border:1px solid var(--border-soft);
+    border-radius:9px;
+    padding:3px;
+    margin-bottom:24px;
+  }
+  .view-toggle button{
+    flex:1;
+    background:none;border:none;
+    color:var(--text-dim);
+    font-size:12px;font-weight:600;
+    padding:7px 0;
+    border-radius:6px;
+    cursor:pointer;
+    font-family:inherit;
+    transition:all .15s;
+  }
+  .view-toggle button.active{background:var(--blue);color:#fff;}
+
+  .nav-label{
+    font-size:10px;
+    letter-spacing:1px;
+    text-transform:uppercase;
+    color:var(--text-faint);
+    padding:0 8px;
+    margin-bottom:8px;
+    margin-top:4px;
+    font-weight:700;
+  }
+  .nav-item{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    padding:9px 10px;
+    border-radius:8px;
+    color:var(--text-dim);
+    font-size:13px;
+    font-weight:500;
+    cursor:pointer;
+    margin-bottom:2px;
+    transition:all .12s;
+    border:1px solid transparent;
+  }
+  .nav-item .ic{width:16px;text-align:center;font-size:13px;opacity:.85;}
+  .nav-item:hover{background:#14161b;color:var(--text);}
+  .nav-item.active{
+    background:rgba(91,130,212,0.12);
+    color:#fff;
+    border-color:rgba(91,130,212,0.25);
+  }
+  .nav-item.active .ic{opacity:1;}
+  .nav-section{margin-bottom:20px;}
+  .nav-badge{
+    margin-left:auto;
+    font-size:10px;font-weight:700;
+    background:#1c2530;color:var(--text-dim);
+    padding:1px 7px;border-radius:20px;
+  }
+
+  /* ---- Main ---- */
+  .main{flex:1;min-width:0;}
+  .topbar{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:22px 32px;
+    border-bottom:1px solid var(--border-soft);
+    background:rgba(8,9,12,0.85);
+    backdrop-filter:blur(10px);
+    position:sticky;top:0;z-index:20;
+  }
+  .topbar h1{font-size:19px;font-weight:700;letter-spacing:-0.3px;}
+  .topbar .sub{font-size:12px;color:var(--text-faint);margin-top:2px;}
+  .topbar-right{display:flex;align-items:center;gap:10px;position:relative;}
+  .pill{
+    font-size:11px;
+    padding:6px 11px;
+    border-radius:20px;
+    background:var(--panel);
+    border:1px solid var(--border-soft);
+    color:var(--text-dim);
+    display:flex;align-items:center;gap:6px;
+  }
+  .pill.live{color:#7be3a3;border-color:rgba(123,227,163,0.25);}
+  .date-pill{cursor:pointer;user-select:none;transition:border-color .15s;}
+  .date-pill-disabled{cursor:not-allowed;opacity:0.5;}
+  .date-pill-disabled:hover{border-color:var(--border-soft);}
+  .date-pill:hover{border-color:#33394a;}
+  .date-picker-panel{
+    display:none;
+    position:absolute;
+    top:46px;
+    right:0;
+    background:var(--panel2);
+    border:1px solid var(--border-soft);
+    border-radius:14px;
+    box-shadow:0 16px 40px rgba(0,0,0,0.5);
+    z-index:50;
+    overflow:hidden;
+  }
+  .date-picker-panel.open{display:block;}
+  .dp-panel-flex{display:flex;max-width:94vw;}
+  .dp-sidebar{
+    width:160px;flex-shrink:0;padding:16px 10px;
+    border-right:1px solid var(--border-soft);
+    max-height:480px;overflow-y:auto;
+  }
+  .dp-main{padding:16px 18px;min-width:0;}
+  .dp-title{font-size:10.5px;color:var(--text-faint);text-transform:uppercase;letter-spacing:.5px;font-weight:700;}
+  .dp-preset{
+    display:block;width:100%;text-align:left;
+    background:none;border:1px solid transparent;
+    color:var(--text-dim);font-size:12.5px;font-family:inherit;
+    padding:7px 9px;border-radius:7px;cursor:pointer;margin-bottom:2px;
+  }
+  .dp-preset:hover{background:rgba(255,255,255,0.04);color:var(--text);}
+  .dp-preset.active{background:rgba(91,130,212,0.16);color:#a9c0ec;border-color:rgba(91,130,212,0.3);font-weight:600;}
+  .dp-divider{height:1px;background:var(--border-soft);margin:12px 0;}
+  .dp-month-pills{display:flex;flex-direction:column;gap:2px;}
+  .dp-month-pill{
+    background:none;border:1px solid transparent;text-align:left;
+    color:var(--text-dim);font-size:12px;font-family:inherit;
+    padding:6px 9px;border-radius:7px;cursor:pointer;
+  }
+  .dp-month-pill:hover{background:rgba(255,255,255,0.04);color:var(--text);}
+  .dp-fields{display:flex;align-items:flex-end;gap:10px;margin-bottom:16px;}
+  .dp-field{flex:1;display:flex;flex-direction:column;gap:5px;}
+  .dp-field label{font-size:9.5px;color:var(--text-faint);text-transform:uppercase;letter-spacing:.4px;font-weight:700;}
+  .dp-field input{
+    background:var(--panel);border:1px solid var(--border-soft);border-radius:8px;
+    color:var(--text);font-size:12.5px;padding:8px 10px;font-family:inherit;width:100%;outline:none;
+  }
+  .dp-field input:focus{border-color:var(--blue);}
+  .dp-arrow-sep{color:var(--text-faint);font-size:13px;padding-bottom:9px;}
+  .dp-cal-pair{display:flex;gap:24px;margin-bottom:16px;}
+  .dp-cal-month{width:230px;}
+  .dp-cal-month-head{display:flex;align-items:center;justify-content:space-between;font-size:12.5px;font-weight:700;margin-bottom:10px;}
+  .dp-cal-arrow{
+    background:none;border:1px solid var(--border-soft);border-radius:6px;
+    color:var(--text-dim);width:22px;height:22px;font-size:13px;cursor:pointer;
+    display:flex;align-items:center;justify-content:center;font-family:inherit;
+  }
+  .dp-cal-arrow:hover{color:var(--text);border-color:#33394a;}
+  .dp-cal-daynames{display:grid;grid-template-columns:repeat(7,1fr);margin-bottom:4px;}
+  .dp-cal-daynames div{text-align:center;font-size:9.5px;color:var(--text-faint);font-weight:700;}
+  .dp-cal-days{display:grid;grid-template-columns:repeat(7,1fr);gap:1px;}
+  .dp-day{
+    background:none;border:none;color:var(--text-dim);font-size:11px;
+    padding:6px 0;cursor:pointer;font-family:inherit;text-align:center;border-radius:5px;
+  }
+  .dp-day:hover{background:rgba(255,255,255,0.06);color:var(--text);}
+  .dp-day.dp-day-inrange{background:rgba(91,130,212,0.14);border-radius:0;color:#a9c0ec;}
+  .dp-day.dp-day-selected{background:var(--blue);color:#fff;font-weight:700;}
+  .dp-actions{display:flex;justify-content:flex-end;gap:10px;}
+  .dp-cancel{
+    background:none;border:1px solid var(--border-soft);color:var(--text-dim);
+    border-radius:8px;padding:9px 18px;font-size:12.5px;font-weight:600;cursor:pointer;font-family:inherit;
+  }
+  .dp-cancel:hover{color:var(--text);border-color:#33394a;}
+  .dp-apply{
+    background:var(--blue);color:#fff;border:none;border-radius:8px;
+    padding:9px 0;font-size:12.5px;font-weight:700;cursor:pointer;font-family:inherit;
+  }
+  .dp-apply:hover{opacity:0.88;}
+  .dp-apply:disabled{opacity:0.35;cursor:not-allowed;}
+  .dot{width:6px;height:6px;border-radius:50%;background:#7be3a3;box-shadow:0 0 0 3px rgba(123,227,163,0.15);}
+
+  /* ---- Interactive chart elements ---- */
+  .chart-tooltip{
+    display:none;position:fixed;z-index:200;
+    background:#0c0d10;border:1px solid #33394a;border-radius:9px;
+    padding:8px 12px;font-size:12px;color:#eef0f3;
+    box-shadow:0 8px 24px rgba(0,0,0,0.5);
+    pointer-events:none;white-space:nowrap;
+    transform:translate(-50%,-8px);
+    animation:tipIn .12s ease-out;
+  }
+  .chart-tooltip.show{display:block;}
+  .chart-tooltip b{color:#a9c0ec;}
+  @keyframes tipIn{from{opacity:0;transform:translate(-50%,0px);}to{opacity:1;transform:translate(-50%,-8px);}}
+  .chart-hit{cursor:pointer;transition:opacity .15s, filter .15s;}
+  .chart-hit:hover{filter:brightness(1.25);}
+  .chart-hit.chart-active{filter:brightness(1.35);}
+  .chart-pt{cursor:pointer;transition:r .15s, filter .15s;}
+  .chart-pt:hover, .chart-pt.chart-active{filter:brightness(1.3);}
+  @keyframes popIn{0%{transform:scale(0.6);}60%{transform:scale(1.25);}100%{transform:scale(1);}}
+  .chart-pop{animation:popIn .25s ease-out;transform-box:fill-box;transform-origin:center;}
+  @media(max-width:760px){
+    .dp-panel-flex{flex-direction:column;}
+    .dp-sidebar{width:100%;border-right:none;border-bottom:1px solid var(--border-soft);max-height:160px;}
+    .dp-cal-pair{flex-direction:column;gap:16px;}
+    .dp-cal-month{width:100%;}
+    .date-picker-panel{position:fixed;top:60px;left:50%;transform:translateX(-50%);right:auto;max-height:80vh;overflow-y:auto;}
+  }
+  .content{padding:28px 32px 80px;max-width:1400px;}
+
+  /* ---- KPI cards ---- */
+  .kpi-grid{
+    display:grid;
+    grid-template-columns:repeat(4,1fr);
+    gap:14px;
+    margin-bottom:16px;
+  }
+  .card{
+    background:var(--panel);
+    border:1px solid var(--border-soft);
+    border-radius:14px;
+    padding:20px;
+  }
+  .kpi-label{font-size:12px;color:var(--text-faint);margin-bottom:10px;font-weight:500;}
+  .kpi-value{font-size:26px;font-weight:700;letter-spacing:-0.5px;}
+  .kpi-sub{font-size:11.5px;color:var(--text-dim);margin-top:8px;}
+  .kpi-sub.up{color:#7be3a3;}
+  .kpi-unit{font-size:15px;color:var(--text-dim);font-weight:500;margin-left:2px;}
+
+  .row2{display:grid;grid-template-columns:2fr 1fr;gap:14px;margin-top:14px;}
+
+  .banner{
+    background:linear-gradient(90deg, rgba(91,130,212,0.08), rgba(91,130,212,0.02));
+    border:1px solid rgba(91,130,212,0.2);
+    border-radius:14px;
+    padding:18px 22px;
+    display:flex;
+    align-items:center;
+    gap:16px;
+    margin-bottom:16px;
+  }
+  .banner-icon{
+    width:38px;height:38px;border-radius:10px;
+    background:rgba(91,130,212,0.15);
+    display:flex;align-items:center;justify-content:center;
+    font-size:16px;flex-shrink:0;color:var(--blue);
+  }
+  .banner-text{flex:1;font-size:13.5px;color:var(--text-dim);line-height:1.5;}
+  .banner-text b{color:var(--text);font-weight:600;}
+  .banner-cta{font-size:13px;font-weight:700;color:#7be3a3;text-align:right;flex-shrink:0;}
+  .banner-cta .small{font-size:10.5px;color:var(--text-faint);font-weight:400;margin-top:2px;}
+
+  .metrics-strip{
+    display:grid;
+    grid-template-columns:auto repeat(5,1fr);
+    gap:0;
+    background:var(--panel);
+    border:1px solid var(--border-soft);
+    border-radius:14px;
+    padding:18px 22px;
+    align-items:center;
+    margin-bottom:16px;
+  }
+  .metrics-strip .period{display:flex;align-items:center;gap:10px;padding-right:24px;border-right:1px solid var(--border-soft);}
+  .metrics-strip .period .lab{font-size:10.5px;color:var(--text-faint);}
+  .metrics-strip .period .val{font-size:13px;font-weight:600;}
+  .mstat{padding-left:24px;}
+  .mstat .lab{font-size:11px;color:var(--text-faint);margin-bottom:5px;}
+  .mstat .val{font-size:17px;font-weight:700;}
+
+  .panel-title{font-size:13.5px;font-weight:700;margin-bottom:2px;}
+  .panel-sub{font-size:11px;color:var(--text-faint);margin-bottom:16px;}
+
+  svg text{font-family:inherit;}
+
+  .donut-wrap{display:flex;align-items:center;gap:20px;margin:10px 0 16px;}
+  .legend-item{display:flex;align-items:center;gap:8px;margin-bottom:12px;font-size:12.5px;}
+  .legend-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+  .legend-item .amt{margin-left:auto;font-weight:700;}
+  .legend-item .lab{color:var(--text-dim);}
+  .legend-item .sub{display:block;font-size:10.5px;color:var(--text-faint);font-weight:400;}
+
+  .progress-row{margin-top:14px;font-size:12px;color:var(--text-dim);display:flex;justify-content:space-between;margin-bottom:6px;}
+  .progress-bar{height:7px;background:#1a1d23;border-radius:20px;overflow:hidden;}
+  .progress-bar-fill{height:100%;background:linear-gradient(90deg,var(--blue),#7be3a3);border-radius:20px;}
+
+  .contracts-table{width:100%;border-collapse:collapse;margin-top:8px;}
+  .contracts-table th{
+    text-align:left;font-size:10.5px;color:var(--text-faint);
+    text-transform:uppercase;letter-spacing:.5px;font-weight:700;
+    padding:10px 14px;border-bottom:1px solid var(--border-soft);
+  }
+  .contracts-table td{padding:14px;border-bottom:1px solid var(--border-soft);font-size:13px;}
+  .contracts-table tr:last-child td{border-bottom:none;}
+  .cname{font-weight:600;}
+  .csub{font-size:11px;color:var(--text-faint);margin-top:2px;}
+  .bar-split{display:flex;height:6px;width:110px;border-radius:20px;overflow:hidden;background:#1a1d23;}
+  .bar-split .f{background:var(--green);}
+  .bar-split .v{background:var(--purple);}
+
+  /* ---- Pillars overview ---- */
+  .pillar-strip{
+    display:grid;
+    grid-template-columns:repeat(5,1fr);
+    gap:12px;
+    margin-bottom:18px;
+  }
+  .pillar-tile{
+    background:var(--panel);
+    border:1px solid var(--border-soft);
+    border-radius:14px;
+    padding:18px 16px;
+    cursor:pointer;
+    transition:all .15s;
+    position:relative;
+    overflow:hidden;
+  }
+  .pillar-tile:hover{transform:translateY(-2px);}
+  .pillar-tile.active{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent) inset;}
+  .pillar-tile .ptag{
+    font-size:10px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;
+    color:var(--accent);margin-bottom:10px;display:flex;align-items:center;gap:6px;
+  }
+  .pillar-tile .pdesc{font-size:12px;color:var(--text-dim);line-height:1.5;margin-bottom:14px;min-height:52px;}
+  .pillar-tile .ptags{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;}
+  .ptags span{
+    font-size:10.5px;background:#181b21;border:1px solid var(--border-soft);
+    padding:3px 8px;border-radius:6px;color:var(--text-dim);
+  }
+  .pillar-tile .pcount{font-size:12px;font-weight:700;color:var(--text);}
+
+  /* ---- Detail block ---- */
+  .detail-block{
+    background:var(--panel);
+    border:1px solid var(--border-soft);
+    border-radius:16px;
+    padding:26px 26px 6px;
+    margin-bottom:18px;
+  }
+  .detail-head{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:22px;}
+  .detail-tag{
+    display:inline-flex;align-items:center;gap:6px;
+    font-size:10.5px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;
+    color:var(--accent);background:rgba(255,255,255,0.03);
+    border:1px solid var(--border-soft);
+    padding:5px 10px;border-radius:7px;margin-bottom:10px;
+  }
+  .detail-headline{font-size:16px;font-weight:600;font-style:italic;color:#dfe2e7;max-width:640px;line-height:1.4;}
+  .detail-count{
+    background:rgba(255,255,255,0.03);
+    border:1px solid var(--border-soft);
+    border-radius:12px;
+    padding:14px 22px;
+    text-align:center;
+    flex-shrink:0;
+  }
+  .detail-count .n{font-size:28px;font-weight:800;color:var(--accent);}
+  .detail-count .l{font-size:9.5px;color:var(--text-faint);text-transform:uppercase;letter-spacing:.5px;margin-top:2px;}
+
+  .detail-grid{display:grid;grid-template-columns:1.3fr 1fr;gap:22px;margin-bottom:22px;}
+  .problems-title{font-size:10.5px;color:var(--text-faint);text-transform:uppercase;letter-spacing:.6px;font-weight:700;margin-bottom:14px;}
+  .problem-item{display:flex;gap:12px;margin-bottom:16px;}
+  .problem-item .pd{width:6px;height:6px;border-radius:50%;background:var(--accent);margin-top:6px;flex-shrink:0;}
+  .problem-item b{font-size:13px;font-weight:700;display:block;margin-bottom:3px;}
+  .problem-item p{font-size:12px;color:var(--text-dim);line-height:1.5;}
+
+  .why-box{
+    background:rgba(255,255,255,0.025);
+    border:1px solid var(--border-soft);
+    border-radius:12px;
+    padding:18px;
+  }
+  .why-title{font-size:10.5px;color:var(--accent);text-transform:uppercase;letter-spacing:.6px;font-weight:700;margin-bottom:10px;}
+  .why-box p{font-size:12.5px;color:var(--text-dim);line-height:1.65;}
+
+  .impact-title-row{margin-bottom:12px;}
+  .impact-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:24px;}
+  .impact-card{
+    background:rgba(255,255,255,0.02);
+    border:1px solid var(--border-soft);
+    border-radius:12px;
+    padding:16px;
+  }
+  .impact-lab{font-size:10.5px;color:var(--text-faint);text-transform:uppercase;letter-spacing:.4px;margin-bottom:10px;}
+  .impact-val{font-size:16px;font-weight:700;}
+  .impact-val .arrow{color:var(--text-faint);margin:0 5px;font-weight:400;}
+  .impact-val .after{color:var(--accent);}
+
+  .auto-label{
+    display:flex;align-items:center;gap:8px;
+    font-size:13px;font-weight:700;margin:8px 0 14px;
+    color:var(--accent);
+  }
+  .auto-label .hint{font-size:11px;color:var(--text-faint);font-weight:400;margin-left:4px;}
+
+  .auto-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:24px;}
+  .auto-card{
+    background:rgba(255,255,255,0.02);
+    border:1px solid var(--border-soft);
+    border-radius:12px;
+    padding:16px;
+    cursor:pointer;
+    transition:all .15s;
+  }
+  .auto-card:hover{border-color:#33394a;}
+  .auto-card.open{border-color:var(--accent);background:rgba(255,255,255,0.035);}
+  .auto-card h4{font-size:13.5px;font-weight:700;margin-bottom:6px;}
+  .auto-card p{font-size:11.5px;color:var(--text-dim);line-height:1.5;margin-bottom:12px;min-height:48px;}
+  .auto-result{font-size:12px;font-weight:700;color:var(--accent);margin-bottom:10px;}
+  .auto-foot{display:flex;align-items:center;justify-content:space-between;}
+  .freq-tag{font-size:10px;background:rgba(255,255,255,0.05);padding:3px 8px;border-radius:6px;color:var(--text-dim);}
+  .status{font-size:10.5px;color:#7be3a3;display:flex;align-items:center;gap:5px;font-weight:600;}
+  .status .d{width:5px;height:5px;border-radius:50%;background:#7be3a3;}
+  .auto-toggle{font-size:10.5px;color:var(--text-faint);text-align:right;margin-top:8px;}
+
+  .auto-detail{
+    grid-column:1/-1;
+    background:rgba(255,255,255,0.03);
+    border:1px solid var(--accent);
+    border-radius:14px;
+    padding:22px;
+    margin-bottom:24px;
+    animation:fadein .2s ease;
+  }
+  @keyframes fadein{from{opacity:0;transform:translateY(-4px);}to{opacity:1;transform:translateY(0);}}
+  .auto-detail-top{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:16px;}
+  .auto-detail-top h3{font-size:17px;font-weight:700;margin:8px 0 4px;}
+  .auto-detail-top .meta{font-size:12px;color:var(--text-dim);}
+  .auto-detail-top .meta b{color:var(--accent);font-weight:600;}
+  .auto-detail-result{
+    background:rgba(255,255,255,0.04);
+    border-radius:10px;
+    padding:12px 18px;text-align:right;flex-shrink:0;
+  }
+  .auto-detail-result .l{font-size:9.5px;color:var(--text-faint);text-transform:uppercase;letter-spacing:.5px;}
+  .auto-detail-result .v{font-size:18px;font-weight:800;color:var(--accent);}
+  .concrete-title{font-size:10.5px;color:var(--text-faint);text-transform:uppercase;letter-spacing:.6px;font-weight:700;margin-bottom:12px;}
+  .concrete-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+  .concrete-item{display:flex;gap:10px;font-size:12.5px;color:var(--text-dim);line-height:1.55;}
+  .concrete-item .d{width:6px;height:6px;border-radius:50%;background:var(--accent);margin-top:6px;flex-shrink:0;}
+
+  .fade-hint{text-align:center;padding:14px;color:var(--text-faint);font-size:11px;}
+
+  /* ---- Second cerveau ---- */
+  .source-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:14px;}
+  .source-item{
+    display:flex;align-items:center;gap:10px;
+    background:rgba(255,255,255,0.02);
+    border:1px solid var(--border-soft);
+    border-radius:10px;
+    padding:11px 12px;
+  }
+  .source-ic{font-size:15px;}
+  .source-name{font-size:12.5px;font-weight:600;color:var(--text-dim);}
+  .vault-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:14px;}
+  .vault-card{
+    background:rgba(255,255,255,0.02);
+    border:1px solid var(--border-soft);
+    border-radius:12px;
+    padding:16px;
+  }
+  .vault-title{font-size:12.5px;font-weight:700;margin-bottom:8px;}
+  .vault-card p{font-size:11.5px;color:var(--text-dim);line-height:1.5;margin-bottom:12px;}
+  .vault-freq{font-size:10.5px;color:var(--text-faint);}
+
+  /* ---- Micro-preuves ---- */
+  .proof-feed{margin-top:12px;}
+  .proof-item{
+    display:flex;
+    gap:14px;
+    padding:14px 4px;
+    border-bottom:1px solid var(--border-soft);
+  }
+  .proof-item:last-child{border-bottom:none;}
+  .proof-dot{width:8px;height:8px;border-radius:50%;margin-top:6px;flex-shrink:0;}
+  .proof-body{flex:1;min-width:0;}
+  .proof-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;}
+  .proof-tag{
+    font-size:10.5px;font-weight:700;
+    border:1px solid var(--border-soft);
+    padding:3px 9px;border-radius:20px;
+  }
+  .proof-time{font-size:11px;color:var(--text-faint);flex-shrink:0;}
+  .proof-title{font-size:13.5px;font-weight:700;margin-bottom:4px;}
+  .proof-detail{font-size:12px;color:var(--text-dim);line-height:1.5;margin-bottom:6px;}
+  .proof-src{font-size:10.5px;color:var(--text-faint);}
+
+  /* ---- Second cerveau — ask box ---- */
+  .ask-card{border-color:rgba(91,130,212,0.25);background:linear-gradient(180deg,rgba(91,130,212,0.05),var(--panel));}
+  .ask-conversation{
+    margin:14px 0;
+    max-height:280px;
+    overflow-y:auto;
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+    padding-right:4px;
+  }
+  .ask-bubble{display:flex;gap:8px;max-width:80%;}
+  .ask-bubble.user{align-self:flex-end;flex-direction:row-reverse;}
+  .ask-avatar{
+    width:26px;height:26px;border-radius:50%;flex-shrink:0;
+    background:rgba(91,130,212,0.15);
+    display:flex;align-items:center;justify-content:center;font-size:13px;
+  }
+  .ask-text{
+    font-size:12.5px;line-height:1.5;
+    padding:10px 14px;border-radius:12px;
+  }
+  .ask-bubble.ai .ask-text{background:var(--panel2);border:1px solid var(--border-soft);color:var(--text-dim);border-top-left-radius:3px;}
+  .ask-bubble.user .ask-text{background:var(--blue);color:#fff;border-top-right-radius:3px;}
+  .ask-input-row{display:flex;gap:10px;}
+  .ask-input{
+    flex:1;
+    background:var(--panel2);
+    border:1px solid var(--border-soft);
+    border-radius:10px;
+    padding:11px 14px;
+    color:var(--text);
+    font-size:13px;
+    font-family:inherit;
+    outline:none;
+  }
+  .ask-input:focus{border-color:var(--blue);}
+  .ask-input::placeholder{color:var(--text-faint);}
+  .ask-btn{
+    background:var(--blue);
+    color:#fff;
+    border:none;
+    border-radius:10px;
+    padding:0 20px;
+    font-size:13px;
+    font-weight:700;
+    cursor:pointer;
+    font-family:inherit;
+    transition:opacity .15s;
+  }
+  .ask-btn:hover{opacity:0.88;}
+  @media(max-width:1100px){
+    .source-grid,.vault-grid{grid-template-columns:repeat(2,1fr)!important;}
+  }
+
+  @media(max-width:1100px){
+    .kpi-grid,.row2,.impact-grid,.auto-grid,.concrete-grid,.pillar-strip{grid-template-columns:repeat(2,1fr)!important;}
+    .sidebar{display:none;}
+  }
+  /* ---- Login gate ---- */
+  .login-gate{
+    position:fixed;inset:0;z-index:1000;
+    background:radial-gradient(ellipse 800px 500px at 50% 20%, rgba(91,130,212,0.1), var(--bg) 70%);
+    display:flex;align-items:center;justify-content:center;
+    padding:20px;
+  }
+  .login-box{
+    width:100%;max-width:380px;
+    background:var(--panel);border:1px solid var(--border-soft);
+    border-radius:16px;padding:32px 28px;
+    box-shadow:0 20px 60px rgba(0,0,0,0.5);
+  }
+  .login-brand{display:flex;flex-direction:column;align-items:center;gap:10px;margin-bottom:26px;}
+  .login-brand .brand-mark{width:44px;height:44px;font-size:14px;}
+  .login-brand .brand-name{font-size:15px;font-weight:700;}
+  .login-tabs{display:flex;background:var(--panel2);border:1px solid var(--border-soft);border-radius:10px;padding:3px;margin-bottom:22px;}
+  .login-tab{flex:1;background:none;border:none;color:var(--text-dim);font-size:12.5px;font-weight:600;padding:8px 0;border-radius:7px;cursor:pointer;font-family:inherit;transition:all .15s;}
+  .login-tab.active{background:var(--blue);color:#fff;}
+  .login-field{margin-bottom:14px;}
+  .login-field label{display:block;font-size:11px;color:var(--text-dim);margin-bottom:6px;font-weight:600;}
+  .login-field input{
+    width:100%;background:var(--panel2);border:1px solid var(--border-soft);
+    border-radius:9px;padding:10px 12px;color:var(--text);font-size:13px;font-family:inherit;outline:none;
+  }
+  .login-field input:focus{border-color:var(--blue);}
+  .login-submit{
+    width:100%;background:var(--blue);color:#fff;border:none;border-radius:9px;
+    padding:11px 0;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;
+    margin-top:4px;transition:opacity .15s;
+  }
+  .login-submit:hover{opacity:0.9;}
+  .login-hint{font-size:10.5px;color:var(--text-faint);text-align:center;margin-top:12px;line-height:1.5;}
+  .login-error{font-size:11.5px;color:#e2694a;text-align:center;margin-top:10px;min-height:14px;}
+  .login-disclaimer{font-size:9.5px;color:var(--text-faint);text-align:center;margin-top:18px;padding-top:14px;border-top:1px solid var(--border-soft);line-height:1.5;}
+  .logout-btn{
+    margin-left:auto;background:none;border:1px solid var(--border-soft);color:var(--text-dim);
+    border-radius:8px;padding:6px 12px;font-size:11.5px;font-weight:600;cursor:pointer;font-family:inherit;
+  }
+  .logout-btn:hover{color:var(--text);border-color:#33394a;}
+  .app-shell{display:flex;min-height:100vh;width:100%;}
+</style>
+</head>
+<body>
+
+<div id="loginGate" class="login-gate">
+  <div class="login-box">
+    <div class="login-brand">
+      <div class="brand-mark">ASP</div>
+      <div class="brand-name">Acquisition Scale Partner</div>
+    </div>
+    <div class="login-tabs" id="loginTabs" style="display:none;">
+      <button type="button" class="login-tab active" id="tabClient" onclick="switchLoginTab('client')">Espace client</button>
+      <button type="button" class="login-tab" id="tabAgence" onclick="switchLoginTab('agence')">Espace agence</button>
+    </div>
+
+    <div id="loginPaneClient">
+      <div class="login-field">
+        <label>Email</label>
+        <input type="email" id="loginEmailClient" placeholder="Email">
+      </div>
+      <div class="login-field">
+        <label>Mot de passe</label>
+        <input type="password" id="loginPassClient" placeholder="••••••••">
+      </div>
+      <button type="button" class="login-submit" onclick="attemptLogin('client')">Se connecter</button>
+      <div class="login-hint">Connectez-vous avec les identifiants fournis par votre agence.</div>
+    </div>
+
+    <div id="loginPaneAgence" style="display:none;">
+      <div class="login-field">
+        <label>Email</label>
+        <input type="email" id="loginEmailAgence" placeholder="Email">
+      </div>
+      <div class="login-field">
+        <label>Mot de passe agence</label>
+        <input type="password" id="loginPassAgence" placeholder="••••••••">
+      </div>
+      <button type="button" class="login-submit" onclick="attemptLogin('agence')">Se connecter</button>
+      <div class="login-hint">Accès agence : vue d'ensemble tous clients + détail par client.</div>
+    </div>
+
+    <div id="loginError" class="login-error"></div>
+
+    <div class="login-disclaimer">Connexion sécurisée par Supabase Auth. Les accès et les données sont isolés par utilisateur.</div>
+  </div>
+</div>
+
+<div class="app-shell" id="appShell" style="display:none;">
+<div class="sidebar">
+  <div class="brand">
+    <div class="brand-mark">ASP</div>
+    <div class="brand-name">Acquisition Scale Partner</div>
+  </div>
+
+  <div class="client-box">
+    <div class="client-icon">🏠</div>
+    <div class="client-meta">
+      <select id="clientSelect" onchange="setClient(this.value)">
+        <option selected>RAV Distribution Automobiles</option>
+      </select>
+      <div class="client-sub">Client actif · high ticket</div>
+    </div>
+  </div>
+
+  <div class="view-toggle">
+    <button id="btnClient" class="active" onclick="setView('client')">Vue Client</button>
+    <button id="btnAgence" onclick="setView('agence')">Vue Agence</button>
+  </div>
+
+  <div class="nav-section">
+    <div class="nav-label">Tableau de bord</div>
+    <div class="nav-item" data-page="overview"><span class="ic">📊</span> Vue d'ensemble</div>
+    <div class="nav-item" data-page="acquisition"><span class="ic">📥</span> Acquisition</div>
+    <div class="nav-item" data-page="ventes"><span class="ic">📞</span> Ventes</div>
+    <div class="nav-item" data-page="activite"><span class="ic">🧠</span> Activité IA</div>
+    <div class="nav-item" data-page="setter"><span class="ic">💬</span> Setter IA</div>
+  </div>
+
+  <div class="nav-section">
+    <div class="nav-label">Infrastructure</div>
+    <div class="nav-item active" data-page="architecture"><span class="ic">🧬</span> Architecture</div>
+    <div class="nav-item" data-page="cerveau"><span class="ic">🧠</span> Second cerveau</div>
+    <div class="nav-item" data-page="preuves"><span class="ic">🔍</span> Micro-preuves</div>
+  </div>
+</div>
+
+<div class="main">
+  <div class="topbar">
+    <div>
+      <h1 id="pageTitle">Architecture</h1>
+      <div class="sub" id="pageSub">Infrastructure Acquisition Scale Partner — 5 piliers</div>
+    </div>
+    <div class="topbar-right">
+      <div class="pill date-pill" id="datePillBtn" onclick="toggleDatePicker(event)">📅 <span id="dateRangeLabel">01/03/2025 — 31/03/2026</span> <span style="opacity:.6;">▾</span></div>
+      <div class="pill">Sources configurées : Meta · GHL — disponibilité à vérifier</div>
+      <div class="pill live"><span class="dot"></span> Live</div>
+      <button type="button" class="logout-btn" onclick="logout()">Déconnexion</button>
+      <div class="date-picker-panel" id="datePickerPanel" onclick="event.stopPropagation()"></div>
+    </div>
+  </div>
+
+  <div class="content" id="content"></div>
+  <div class="chart-tooltip" id="chartTooltip"></div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+const SUPABASE_URL = 'https://camezagvyeavzpyvofvk.supabase.co';
+const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_6S0P9Bc3Z2LqbbiR8hd1AA_FgLCn18m';
+const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
+/* ============ AUTH SUPABASE ============ */
+let activeClientName = 'RAV Distribution Automobiles';
+let userRole = null; // 'client' | 'agence'
+let realtimeSubscribed = false;
+
+// The "Espace agence" tab is hidden from the login screen by default — a client
+// visiting the normal URL never even sees it exists. Only visiting the page with
+// #agence in the URL (the link Livio keeps for himself) reveals it.
+(function initLoginTabsVisibility(){
+  if(window.location.hash === '#agence'){
+    const tabs = document.getElementById('loginTabs');
+    if(tabs) tabs.style.display = 'flex';
+    switchLoginTab('agence');
+  }
+})();
+
+function switchLoginTab(tab){
+  document.getElementById('tabClient').classList.toggle('active', tab==='client');
+  document.getElementById('tabAgence').classList.toggle('active', tab==='agence');
+  document.getElementById('loginPaneClient').style.display = tab==='client' ? 'block' : 'none';
+  document.getElementById('loginPaneAgence').style.display = tab==='agence' ? 'block' : 'none';
+  document.getElementById('loginError').textContent = '';
+}
+
+async function attemptLogin(role){
+  const errEl = document.getElementById('loginError');
+  const email = document.getElementById(role==='client'?'loginEmailClient':'loginEmailAgence').value.trim();
+  const pass = document.getElementById(role==='client'?'loginPassClient':'loginPassAgence').value;
+  if(!email || !pass){ errEl.textContent = 'Merci de renseigner email et mot de passe.'; return; }
+  errEl.textContent = 'Connexion…';
+
+  const {data:authData,error:authError}=await supabaseClient.auth.signInWithPassword({email,password:pass});
+  if(authError || !authData.user){ errEl.textContent = 'Email ou mot de passe incorrect.'; return; }
+
+  const {data:profile,error:profileError}=await supabaseClient
+    .from('dashboard_users')
+    .select('role,client')
+    .eq('user_id',authData.user.id)
+    .maybeSingle();
+  if(profileError || !profile){
+    dashboardPeriodInitialized=false;
+  whatsappSnapshot=null; whatsappState='unavailable';
+  clearInterval(whatsappPoll); whatsappPoll=null;
+  await supabaseClient.removeAllChannels(); realtimeSubscribed=false;
+  await supabaseClient.auth.signOut();
+    errEl.textContent = 'Ce compte n’est pas autorisé à accéder au dashboard.';
+    return;
+  }
+  if(profile.role!==role){
+    whatsappSnapshot=null; whatsappState='unavailable';
+  clearInterval(whatsappPoll); whatsappPoll=null;
+  await supabaseClient.removeAllChannels(); realtimeSubscribed=false;
+  await supabaseClient.auth.signOut();
+    errEl.textContent = role==='client' ? 'Utilisez l’espace agence pour ce compte.' : 'Utilisez l’espace client pour ce compte.';
+    return;
+  }
+  userRole=profile.role;
+  activeClientName=profile.client || 'RAV Distribution Automobiles';
+  document.getElementById('loginGate').style.display = 'none';
+  const shell = document.getElementById('appShell');
+  shell.style.display = 'flex';
+  applyRolePermissions();
+
+  // Land on the overview right away: clients see their own performance,
+  // and Livio sees his agency-wide rollup — no need to click around to find it.
+  currentPage = 'overview';
+  if(role==='agence'){
+    currentView = 'agence';
+    if(document.getElementById('btnAgence')){
+      document.getElementById('btnAgence').classList.add('active');
+      document.getElementById('btnClient').classList.remove('active');
+    }
+  }else{
+    currentView = 'client';
+  }
+  document.querySelectorAll('.nav-item[data-page]').forEach(i=>i.classList.remove('active'));
+  const overviewNav = document.querySelector('.nav-item[data-page="overview"]');
+  if(overviewNav) overviewNav.classList.add('active');
+
+  render();
+  await loadAllDashboardData();
+}
+
+async function logout(){
+  whatsappSnapshot=null; whatsappState='unavailable';
+  clearInterval(whatsappPoll); whatsappPoll=null;
+  await supabaseClient.removeAllChannels(); realtimeSubscribed=false;
+  await supabaseClient.auth.signOut();
+  userRole = null;
+  document.getElementById('appShell').style.display = 'none';
+  document.getElementById('loginGate').style.display = 'flex';
+  document.getElementById('loginError').textContent = '';
+  document.getElementById('loginPassClient').value = '';
+  document.getElementById('loginPassAgence').value = '';
+}
+
+function applyRolePermissions(){
+  const viewToggle = document.querySelector('.view-toggle');
+  const clientSelect = document.getElementById('clientSelect');
+  const allClientNames = [activeClientName];
+  if(userRole==='client'){
+    // A client only ever sees their own space: no agency toggle, no other client names.
+    if(viewToggle) viewToggle.style.display = 'none';
+    if(clientSelect){
+      clientSelect.innerHTML = `<option selected>${activeClientName}</option>`;
+      clientSelect.disabled = true;
+    }
+    currentView = 'client';
+  }else{
+    if(viewToggle) viewToggle.style.display = 'flex';
+    if(clientSelect){
+      clientSelect.disabled = false;
+      clientSelect.innerHTML = allClientNames.map(n=>`<option ${n===activeClientName?'selected':''}>${n}</option>`).join('');
+    }
+  }
+}
+
+/* ============ DATA ============ */
+
+const pillars = [
+  {
+    id:'offre', tag:'OFFRE', accent:'var(--blue)', icon:'💡',
+    label:'Véhicules', label2:'Pricing',
+    desc:'Sélection des véhicules, positionnement prix, veille marché.',
+    headline:'On ne peut pas bien vendre un véhicule mal positionné ou mal préparé administrativement.',
+    problems:[
+      {t:'Prix décorrélés du marché', d:'Sans veille continue, un véhicule peut rester affiché au-dessus ou en-dessous du marché de l\'occasion et de l\'import pendant des semaines.'},
+      {t:'Opportunités d\'achat ratées', d:'Les bonnes affaires côté fournisseurs, enchères ou reprises partent vite sans surveillance régulière.'},
+      {t:'Démarches réglementaires qui traînent', d:'Dédouanement, certificat de conformité, immatriculation — des dossiers qui peuvent retarder une vente si mal suivis.'}
+    ],
+    why:'On commence toujours par l\'offre, jamais par la pub. Un véhicule mal acheté, mal positionné en prix, ou bloqué administrativement ne se vendra jamais bien, quel que soit le budget publicitaire mis derrière.',
+    impact:[
+      {l:'Alignement prix marché', a:'Vérification manuelle', b:'Objectif : veille continue'},
+      {l:'Sourcing véhicules', a:'Opportuniste', b:'Objectif : flux régulier identifié'},
+      {l:'Dossiers réglementaires', a:'Suivi au cas par cas', b:'Objectif : suivi centralisé'},
+      {l:'Réactivité prix', a:'Ponctuelle', b:'Objectif : ajustement dès signal marché'}
+    ],
+    automations:[
+      {n:'Veille marché véhicules', d:'Suivi des prix pratiqués par les concurrents mandataires et sur les plateformes (La Centrale, LeBoncoin Auto) sur les modèles similaires.', res:'En cours de déploiement', freq:'Hebdo',
+        bullets:[
+          'Repérer quand un véhicule en stock devient sur-prix ou sous-prix par rapport au marché réel',
+          'Identifier les créneaux de véhicules peu proposés par la concurrence localement',
+          'Donner une base objective pour fixer le prix d\'un nouveau véhicule dès sa réception',
+          'Transformer une veille éparpillée en brief clair et régulier'
+        ]},
+      {n:'Sourcing véhicules', d:'Repérage d\'opportunités d\'achat (enchères, reprises, import) correspondant à la demande identifiée.', res:'En cours de déploiement', freq:'Continu',
+        bullets:[
+          'Repérer les opportunités d\'achat avant qu\'elles ne partent chez un concurrent',
+          'Prioriser les véhicules qui correspondent à une demande déjà identifiée chez les prospects',
+          'Réduire le temps passé à chercher manuellement de bonnes affaires',
+          'Construire un stock qui colle à la demande réelle plutôt qu\'à l\'instinct'
+        ]},
+      {n:'Suivi dossiers réglementaires', d:'Suivi des démarches d\'import (dédouanement, certificat de conformité, immatriculation) pour chaque véhicule en cours.', res:'Process déjà en place (ex : import Mercedes-AMG A35)', freq:'Par dossier',
+        bullets:[
+          'Ne plus perdre le fil d\'un dossier d\'import au milieu d\'autres tâches administratives',
+          'Savoir à tout moment où en est chaque véhicule dans son parcours réglementaire',
+          'Anticiper les délais de conformité avant de promettre une date de livraison au client',
+          'Sécuriser la vente en évitant les blocages administratifs de dernière minute'
+        ]},
+      {n:'Ajustement de prix', d:'Recommandation de prix par véhicule selon l\'ancienneté de l\'annonce et la demande observée.', res:'En cours de déploiement', freq:'Hebdo',
+        bullets:[
+          'Éviter qu\'un véhicule reste affiché au même prix pendant des semaines sans bouger',
+          'Ajuster le prix dès qu\'un signal du marché change plutôt que d\'attendre un bilan mensuel',
+          'Garder une trace claire des ajustements pour comprendre ce qui fonctionne',
+          'Un prix qui suit la réalité du marché, pas figé par habitude'
+        ]}
+    ]
+  },
+  {
+    id:'acquisition', tag:'ACQUISITION', accent:'var(--orange)', icon:'📥',
+    label:'Créas', label2:'Ads',
+    desc:'Générer des leads qualifiés en continu via Meta Ads et le formulaire de qualification.',
+    headline:'Une acquisition qui capte l\'intention avant même le premier appel.',
+    problems:[
+      {t:'Créas publicitaires qui s\'essoufflent', d:'Sans renouvellement régulier, les mêmes visuels tournent trop longtemps et perdent en performance.'},
+      {t:'Leads mal qualifiés à l\'entrée', d:'Sans formulaire structuré, chaque lead demande un premier appel juste pour comprendre ce qu\'il cherche.'},
+      {t:'Réputation en ligne pas pilotée', d:'Les avis Google, positifs comme négatifs, influencent la décision avant même le premier contact.'}
+    ],
+    why:'L\'acquisition ne sert à rien si elle génère du volume mal qualifié. On a construit le système pour que chaque lead arrive déjà avec une intention claire, captée dès le formulaire.',
+    impact:[
+      {l:'Renouvellement des créas', a:'Ponctuel', b:'Objectif : rotation régulière'},
+      {l:'Qualification à l\'entrée', a:'Faite à l\'appel', b:'Objectif : dès le formulaire'},
+      {l:'Suivi des avis Google', a:'Non pilotée', b:'Objectif : réponse systématique'},
+      {l:'Remontée des leads', a:'Manuelle', b:'Objectif : automatique vers Sheets'}
+    ],
+    automations:[
+      {n:'Créas vidéo Meta Ads', d:'Trois formats vidéo créatifs produits et testés en continu sur les campagnes actives.', res:'3 créas vidéo déjà produites', freq:'Continu',
+        bullets:[
+          'Varier les angles pour ne pas dépendre d\'une seule créa qui finit par s\'essouffler',
+          'Adapter le message selon ce qui capte le mieux l\'attention sur chaque format',
+          'Garder un flux créatif frais sans repartir de zéro à chaque fois',
+          'Base déjà posée : trois formats vidéo prêts à être déclinés'
+        ]},
+      {n:'Structure de campagne CBO', d:'Budget optimisé automatiquement par Meta entre les ensembles de publicités actifs.', res:'Structure déjà en place', freq:'Continu',
+        bullets:[
+          'Laisser le budget se concentrer automatiquement sur ce qui convertit le mieux',
+          'Éviter de répartir le budget à l\'instinct entre plusieurs campagnes',
+          'Structure CBO déjà construite et opérationnelle sur le compte',
+          'Base saine pour scaler dès que le budget publicitaire augmente'
+        ]},
+      {n:'Formulaire Instant Form', d:'Formulaire de qualification à 5 questions directement dans Meta, pour capter l\'intention avant même le clic.', res:'Formulaire déjà en production', freq:'Continu',
+        bullets:[
+          'Capter type de véhicule recherché, budget et délai dès le formulaire, sans attendre l\'appel',
+          'Réduire la déperdition entre le clic publicitaire et un lead réellement exploitable',
+          'Donner au commercial un contexte déjà prêt avant même de décrocher',
+          '5 questions déjà calibrées pour ne pas décourager le prospect tout en captant l\'essentiel'
+        ]},
+      {n:'Landing page dédiée', d:'Page de capture en HTML/CSS construite spécifiquement pour convertir le trafic publicitaire.', res:'Landing page déjà construite', freq:'Continu',
+        bullets:[
+          'Une page pensée pour convertir, pas une page générique de site vitrine',
+          'Message cohérent entre la créa publicitaire et ce que le prospect voit en arrivant',
+          'Structure déjà en place, prête à être ajustée selon les résultats',
+          'Réduit la perte de prospects entre le clic et la prise de contact'
+        ]},
+      {n:'Intégration Google Sheets', d:'Chaque lead Meta Ads est automatiquement remonté dans un fichier de suivi structuré.', res:'Intégration déjà active', freq:'Temps réel',
+        bullets:[
+          'Aucun lead ne se perd entre Meta et le suivi commercial',
+          'Une vue centralisée de tous les leads, sans ressaisie manuelle',
+          'Base de données prête pour être branchée à d\'autres outils plus tard',
+          'Déjà opérationnel, aucune action manuelle requise pour la remontée des leads'
+        ]},
+      {n:'Gestion des avis Google', d:'Réponse aux avis clients pour renforcer la réputation avant l\'appel commercial.', res:'En cours de déploiement', freq:'Hebdo',
+        bullets:[
+          'Répondre à chaque avis, positif ou négatif, pour montrer un suivi sérieux',
+          'La réputation en ligne devient un argument de vente plutôt qu\'un point d\'incertitude',
+          'Encourager les clients satisfaits à laisser un avis au bon moment',
+          'Construire la confiance avant même le premier échange avec un nouveau prospect'
+        ]}
+    ]
+  },
+  {
+    id:'ventes', tag:'VENTES', accent:'var(--green)', icon:'📞',
+    label:'Qualification', label2:'Closing',
+    desc:'Transformer les leads en rendez-vous, puis en ventes.',
+    headline:'Chaque lead qualifié avant même que le commercial ne décroche.',
+    problems:[
+      {t:'Délai de réponse variable', d:'Un lead qui attend une réponse humaine perd en intention à chaque heure qui passe.'},
+      {t:'Pas de priorisation claire', d:'Sans scoring, tous les leads sont traités dans l\'ordre d\'arrivée, pas selon leur potentiel réel.'},
+      {t:'Appels de closing non structurés', d:'Sans trame, chaque commercial improvise différemment face à un prospect.'}
+    ],
+    why:'La vente d\'un véhicule est une décision engageante pour le client — le système est construit pour que chaque étape (qualification, chauffe, appel) le rassure au bon moment plutôt que de le brusquer.',
+    impact:[
+      {l:'Temps de première réponse', a:'Variable', b:'Objectif : réponse immédiate 24/7'},
+      {l:'Priorisation des leads', a:'Ordre d\'arrivée', b:'Objectif : scoring dès l\'entrée'},
+      {l:'Structure des appels', a:'Variable par commercial', b:'Objectif : script commun'},
+      {l:'Suivi jusqu\'au RDV', a:'Ponctuel', b:'Objectif : séquence automatisée'}
+    ],
+    automations:[
+      {n:'Agent WhatsApp de qualification', d:'Agent IA qui échange avec chaque lead entrant pour cerner budget, type de véhicule recherché et urgence.', res:'Agent déjà déployé', freq:'Temps réel',
+        bullets:[
+          'Un lead reçoit une première réponse à toute heure, sans attendre qu\'un commercial soit disponible',
+          'Le budget, le type de véhicule recherché et l\'urgence sont cernés avant même l\'appel',
+          'Le commercial arrive en appel avec un contexte déjà posé, pas à découvrir la situation à froid',
+          'Déjà construit et actif sur WhatsApp pour RAV Distribution'
+        ]},
+      {n:'Grille de scoring des leads', d:'Chaque lead est noté selon des critères définis pour prioriser les appels commerciaux.', res:'Grille déjà construite', freq:'Temps réel',
+        bullets:[
+          'Savoir en un coup d\'œil quel lead appeler en premier',
+          'Éviter de passer autant de temps sur un lead peu engagé que sur un lead chaud',
+          'Grille déjà définie, prête à s\'affiner avec plus de données au fil du temps',
+          'Base objective plutôt qu\'un choix à l\'instinct pour prioriser la journée'
+        ]},
+      {n:'Script d\'appel de qualification', d:'Trame structurée utilisée par le commercial pour cadrer chaque appel.', res:'Script déjà rédigé', freq:'Par appel',
+        bullets:[
+          'Chaque appel suit une structure qui couvre les points essentiels, sans rien oublier',
+          'Moins de dépendance à l\'expérience individuelle du commercial ce jour-là',
+          'Base commune qui peut être améliorée au fil des retours terrain',
+          'Déjà rédigé et disponible pour utilisation immédiate'
+        ]},
+      {n:'Séquence email de préchauffage', d:'4 emails automatiques envoyés avant le rendez-vous pour maintenir l\'engagement du prospect.', res:'Séquence déjà construite (4 emails)', freq:'Automatique'
+        , bullets:[
+          'Le prospect reste engagé entre la prise de RDV et le rendez-vous lui-même',
+          'Réduire le risque de no-show en gardant le contact chaud pendant l\'attente',
+          'Séquence déjà écrite, prête à tourner automatiquement dès qu\'un RDV est pris',
+          'Le prospect arrive au rendez-vous déjà un peu préparé, pas surpris'
+        ]},
+      {n:'VSL pré-RDV', d:'Vidéo de vente envoyée avant l\'appel pour préqualifier et éduquer le prospect.', res:'Script VSL déjà rédigé', freq:'Par RDV',
+        bullets:[
+          'Le prospect arrive à l\'appel déjà informé, moins de temps perdu à tout ré-expliquer',
+          'La vidéo pose la confiance avant même le premier échange vocal',
+          'Script déjà prêt, à décliner en vidéo dès que le tournage est fait',
+          'Réduit la charge de pédagogie répétitive sur chaque appel'
+        ]},
+      {n:'VSL post-réservation', d:'Deuxième vidéo diffusée une fois le RDV pris, pour sécuriser la venue.', res:'Script VSL 2 déjà rédigé', freq:'Par RDV',
+        bullets:[
+          'Confirmer au prospect qu\'il a pris la bonne décision en réservant',
+          'Réduire le doute qui peut s\'installer entre la prise de RDV et le jour J',
+          'Renforcer la confiance avec du contenu supplémentaire ciblé',
+          'Script déjà écrit, prêt à être produit'
+        ]},
+      {n:'Suivi du pipeline', d:'Visibilité sur l\'avancement de chaque lead, du premier contact à la signature.', res:'En cours de déploiement', freq:'Continu',
+        bullets:[
+          'Savoir en un coup d\'œil où en est chaque prospect dans le parcours de vente',
+          'Repérer les leads qui stagnent avant qu\'ils ne soient complètement perdus',
+          'Base pour prioriser les relances plutôt que de tout traiter au même niveau',
+          'Une vue d\'ensemble plutôt que des informations éparpillées'
+        ]}
+    ]
+  },
+  {
+    id:'delivery', tag:'DELIVERY', accent:'var(--purple)', icon:'🚚',
+    label:'Livraison', label2:'Suivi',
+    desc:'Livraison du véhicule et satisfaction client.',
+    headline:'La vente ne s\'arrête pas à la signature — la livraison est ce qui reste en mémoire.',
+    problems:[
+      {t:'Dossiers d\'import qui prennent du retard', d:'Sans suivi centralisé, une démarche administrative en cours peut retarder une livraison promise.'},
+      {t:'Communication client pas automatisée', d:'Sans infrastructure email/DNS dédiée, chaque mise à jour se fait manuellement.'},
+      {t:'Zéro suivi après la livraison', d:'Un client livré et jamais recontacté ne laisse pas d\'avis et ne recommande personne.'}
+    ],
+    why:'Un client qui achète un véhicule chez RAV Distribution et qui est bien accompagné jusqu\'à la remise des clés devient un client qui recommande. C\'est cette étape qui construit la réputation sur la durée.',
+    impact:[
+      {l:'Suivi des dossiers d\'import', a:'Au cas par cas', b:'Objectif : suivi centralisé'},
+      {l:'Communication client', a:'Manuelle', b:'Objectif : automatisée (DNS/emails)'},
+      {l:'Suivi post-livraison', a:'Inexistant', b:'Objectif : contact systématique'},
+      {l:'Demande de recommandation', a:'Ponctuelle', b:'Objectif : sollicitation automatique'}
+    ],
+    automations:[
+      {n:'Suivi dossier d\'import', d:'Suivi administratif complet (douane, conformité, immatriculation) jusqu\'à la livraison.', res:'Process déjà en place (ex : Mercedes-AMG A35)', freq:'Par dossier',
+        bullets:[
+          'Le client est informé de l\'avancement réel de son dossier, pas laissé dans le flou',
+          'Aucune étape administrative oubliée entre l\'achat et la remise du véhicule',
+          'Anticiper les délais plutôt que de les découvrir au dernier moment',
+          'Déjà pratiqué sur des dossiers réels, comme l\'import d\'une Mercedes-AMG A35'
+        ]},
+      {n:'Configuration DNS et emails', d:'Infrastructure technique (OVH, Systeme.io) pour les communications automatiques au client.', res:'Infrastructure déjà configurée', freq:'Continu',
+        bullets:[
+          'Les emails envoyés au client partent d\'un domaine propre, pas d\'une adresse générique',
+          'Base technique déjà posée pour automatiser toutes les communications futures',
+          'Systeme.io déjà connecté pour gérer les séquences email',
+          'Infrastructure prête à accueillir de nouvelles automations de communication'
+        ]},
+      {n:'Coordination de la livraison', d:'Planification de la remise du véhicule au client.', res:'En cours de déploiement', freq:'Par vente',
+        bullets:[
+          'Le client sait précisément quand et comment il récupère son véhicule',
+          'Réduire les allers-retours de coordination de dernière minute',
+          'Une expérience de livraison qui reflète le sérieux de la vente elle-même',
+          'Moins de charge mentale pour Philippe sur la logistique de chaque remise'
+        ]},
+      {n:'Suivi satisfaction post-livraison', d:'Contact après livraison pour recueillir un retour et encourager les avis.', res:'En cours de déploiement', freq:'Post-vente',
+        bullets:[
+          'Détecter un client insatisfait avant qu\'il ne parte sans le dire',
+          'Le moment de la demande d\'avis est choisi au pic de satisfaction, pas au hasard',
+          'Construire une réputation en ligne qui reflète la qualité réelle du service',
+          'Transformer chaque vente réussie en preuve sociale pour les prochains prospects'
+        ]},
+      {n:'Relance pour recommandation', d:'Sollicitation des clients satisfaits pour du bouche-à-oreille ou du parrainage.', res:'En cours de déploiement', freq:'Post-vente',
+        bullets:[
+          'Un client satisfait devient une source de nouveaux leads, pas seulement une vente conclue',
+          'La demande de recommandation arrive au bon moment, pas de façon intrusive',
+          'Réduire la dépendance aux seules campagnes publicitaires pour générer des leads',
+          'Construire une base de clients ambassadeurs sur la durée'
+        ]},
+      {n:'Support client', d:'Point de contact pour toute question après-vente.', res:'En cours de déploiement', freq:'Continu',
+        bullets:[
+          'Le client a un canal clair pour toute question après l\'achat',
+          'Réduire le risque qu\'une question sans réponse se transforme en avis négatif',
+          'Renforcer la confiance sur la durée, pas seulement au moment de la vente',
+          'Un service après-vente qui rassure pour un futur achat ou une recommandation'
+        ]}
+    ]
+  },
+  {
+    id:'reporting', tag:'REPORTING', accent:'var(--cyan)', icon:'📈',
+    label:'Suivi', label2:'Alertes',
+    desc:'Visibilité sur la performance de bout en bout.',
+    headline:'Piloter RAV Distribution sur des faits, pas sur une impression.',
+    problems:[
+      {t:'Performance publicitaire pas centralisée', d:'Sans vue consolidée, difficile de savoir rapidement ce qui fonctionne sur les campagnes Meta Ads.'},
+      {t:'Pipeline commercial peu visible', d:'Sans suivi structuré, difficile de savoir combien de leads sont réellement en cours de conversion.'},
+      {t:'Aucune alerte sur les anomalies', d:'Une baisse de leads ou une hausse de coût peut passer inaperçue plusieurs jours.'}
+    ],
+    why:'Le reporting est ce qui permet à Philippe de savoir, à tout moment, où en est réellement son activité — sans avoir à ressaisir ou recouper l\'information à la main.',
+    impact:[
+      {l:'Vue sur les campagnes', a:'Dispersée', b:'Objectif : dashboard consolidé'},
+      {l:'Visibilité pipeline', a:'Limitée', b:'Objectif : suivi structuré'},
+      {l:'Détection d\'anomalies', a:'Manuelle', b:'Objectif : alertes automatiques'},
+      {l:'Fréquence de reporting', a:'Ponctuelle', b:'Objectif : régulière'}
+    ],
+    automations:[
+      {n:'Suivi des campagnes Meta Ads', d:'Vue consolidée des performances publicitaires.', res:'En cours de déploiement', freq:'Continu',
+        bullets:[
+          'Voir en un coup d\'œil ce qui fonctionne sur les campagnes actives',
+          'Éviter de devoir ouvrir plusieurs outils pour reconstituer une vue globale',
+          'Base pour ajuster rapidement le budget vers ce qui convertit',
+          'Prépare le terrain pour scaler la publicité une fois les bons signaux confirmés'
+        ]},
+      {n:'Suivi du pipeline commercial', d:'État des leads à chaque étape, du premier contact à la signature.', res:'En cours de déploiement', freq:'Continu',
+        bullets:[
+          'Savoir combien de ventes sont réellement en cours, pas seulement combien de leads sont entrés',
+          'Repérer les étapes où les prospects décrochent le plus souvent',
+          'Base pour prioriser les efforts commerciaux de la semaine',
+          'Une vue claire plutôt que dispersée entre plusieurs outils'
+        ]},
+      {n:'Rapport d\'activité', d:'Synthèse périodique de l\'activité pour piloter les priorités.', res:'En cours de déploiement', freq:'Hebdo',
+        bullets:[
+          'Un point régulier pour prendre du recul sur l\'activité, pas seulement réagir au jour le jour',
+          'Identifier les tendances avant qu\'elles ne deviennent des problèmes',
+          'Base de décision pour les priorités de la semaine suivante',
+          'Moins de temps passé à compiler manuellement l\'information'
+        ]},
+      {n:'Alertes anomalies', d:'Détection d\'anomalies (chute de leads, hausse de coût) à surveiller.', res:'En cours de déploiement', freq:'Temps réel',
+        bullets:[
+          'Être prévenu rapidement si un problème apparaît, pas seulement au bilan mensuel',
+          'Réagir plus vite quand un coût par lead grimpe ou qu\'un flux se tarit',
+          'Réduire le temps de réaction entre un problème et sa correction',
+          'Une vigilance continue plutôt qu\'une revue ponctuelle'
+        ]},
+      {n:'Vue consolidée', d:'Tableau de bord centralisant les indicateurs clés.', res:'En cours de déploiement', freq:'Continu',
+        bullets:[
+          'Un seul endroit pour voir l\'essentiel de l\'activité de RAV Distribution',
+          'Moins de temps passé à chercher l\'information dans plusieurs outils',
+          'Base solide pour les décisions futures, au fur et à mesure que les données s\'accumulent',
+          'Prêt à s\'enrichir dès que de vraies données de performance seront disponibles'
+        ]}
+    ]
+  }
+];
+
+// Le catalogue ci-dessus décrit le système prévu. Une automation n'est affichée
+// comme vérifiée que lorsqu'une preuve réelle remonte de Supabase.
+pillars.forEach(p=>p.automations.forEach(a=>{ a.verified=false; a.res='Aucune exécution vérifiée'; }));
+
+// Agency-level (Vue Agence) data
+const agency = {
+  ca:'0 €', clients:1, panier:'0 €', part:'2 % HT',
+  contracts:[
+    {n:'RAV Distribution Automobiles',sub:'Client actif',f:'2 % HT',v:0,setup:'0 €',m:'0 €'}
+  ]
+};
+
+// Valeurs initiales réelles : aucune performance confirmée enregistrée.
+// Supabase remplace automatiquement ces zéros dès que des données fiables existent.
+let monthLabelsFull=['Sep 25','Oct 25','Nov 25','Déc 25','Jan 26','Fév 26','Mar 26','Avr 26','Mai 26','Jun 26','Jul 26','Aoû 26','Sep 26'];
+let monthlyDataFull=[
+  ...Array.from({length:13},()=>({phase:'setup',ca:0,ads:0,roas:0,roi:0,leads:0,cpl:0,qualifiedCalls:0,costQualifiedCall:0,appointments:0,attendedAppointments:0,deals:0,costDeal:0,panier:0,conv:0,pipeline:0,google:0,maint:0,ia:0}))
+];
+let rawDailyData=[];
+let selectedStartDate=new Date(2025,8,1);
+let selectedEndDate=new Date(2026,8,30);
+function fmtEUR(n){ return Math.round(n).toLocaleString('fr-FR')+' €'; }
+function fmtNum(n){ return Math.round(n).toLocaleString('fr-FR'); }
+
+/* ---- Date range state & filtering ---- */
+let rangeStart=0, rangeEnd=monthlyDataFull.length-1; // indices inclusive into monthlyDataFull
+let currentDatePreset='full';
+
+function getRangeData(){
+  if(rawDailyData.length){
+    const start=new Date(selectedStartDate); start.setHours(0,0,0,0);
+    const end=new Date(selectedEndDate); end.setHours(23,59,59,999);
+    const days=Math.max(1,Math.round((end-start)/86400000)+1);
+    const daily=days<=45;
+    const buckets=new Map();
+    rawDailyData.filter(row=>row._date>=start&&row._date<=end).forEach(row=>{
+      const key=daily
+        ? `${row._date.getFullYear()}-${String(row._date.getMonth()+1).padStart(2,'0')}-${String(row._date.getDate()).padStart(2,'0')}`
+        : `${row._date.getFullYear()}-${String(row._date.getMonth()+1).padStart(2,'0')}`;
+      if(!buckets.has(key)) buckets.set(key,{phase:row.phase,ca:0,ads:0,leads:0,qualifiedCalls:0,appointments:0,attendedAppointments:0,deals:0,pipeline:0,google:0,maint:0,ia:0,_date:row._date});
+      const b=buckets.get(key);
+      b.ca+=row.ca; b.ads+=row.ads; b.leads+=row.leads; b.qualifiedCalls+=row.qualifiedCalls;
+      b.appointments+=row.appointments; b.attendedAppointments+=row.attendedAppointments;
+      b.deals+=row.deals; b.ia+=row.ia;
+      b.pipeline=row.pipeline; b.google=row.google; b.maint=row.maint; b.phase=row.phase; b._date=row._date;
+    });
+    let grouped=[...buckets.values()].sort((a,b)=>a._date-b._date).map(row=>({
+      ...row,
+      roas:row.ads?row.ca/row.ads:0,
+      roi:row.ads?(row.ca-row.ads)/row.ads*100:0,
+      cpl:row.leads?row.ads/row.leads:0,
+      costQualifiedCall:row.qualifiedCalls?row.ads/row.qualifiedCalls:0,
+      costDeal:row.deals?row.ads/row.deals:0,
+      panier:row.deals?row.ca/row.deals:0,
+      conv:row.leads?row.deals/row.leads*100:0
+    }));
+    if(!grouped.length) grouped=[{phase:'setup',ca:0,ads:0,roas:0,roi:0,leads:0,cpl:0,qualifiedCalls:0,costQualifiedCall:0,appointments:0,attendedAppointments:0,deals:0,costDeal:0,panier:0,conv:0,pipeline:0,google:0,maint:0,ia:0,_date:start}];
+    const labels=grouped.map(row=>daily
+      ? String(row._date.getDate()).padStart(2,'0')+'/'+String(row._date.getMonth()+1).padStart(2,'0')
+      : ['Jan','Fév','Mar','Avr','Mai','Jun','Jul','Aoû','Sep','Oct','Nov','Déc'][row._date.getMonth()]+' '+String(row._date.getFullYear()).slice(-2));
+    return {data:grouped,labels};
+  }
+  return {
+    data: monthlyDataFull.slice(rangeStart, rangeEnd+1),
+    labels: monthLabelsFull.slice(rangeStart, rangeEnd+1)
+  };
+}
+function computeTotals(data){
+  const t = {
+    ca: data.reduce((s,d)=>s+d.ca,0),
+    ads: data.reduce((s,d)=>s+d.ads,0),
+    leads: data.reduce((s,d)=>s+d.leads,0),
+    qualifiedCalls: data.reduce((s,d)=>s+(d.qualifiedCalls||0),0),
+    appointments: data.reduce((s,d)=>s+(d.appointments||0),0),
+    attendedAppointments: data.reduce((s,d)=>s+(d.attendedAppointments||0),0),
+    deals: data.reduce((s,d)=>s+d.deals,0),
+    ia: data.reduce((s,d)=>s+d.ia,0)
+  };
+  t.roas = t.ads ? (t.ca/t.ads).toFixed(2) : '0.00';
+  t.roi = t.ads ? ((t.ca-t.ads)/t.ads*100).toFixed(1) : '0.0';
+  t.cpl = t.leads ? Math.round(t.ads/t.leads) : 0;
+  t.costQualifiedCall = t.qualifiedCalls ? Math.round(t.ads/t.qualifiedCalls) : 0;
+  t.appointmentRate = t.leads ? (t.appointments/t.leads*100).toFixed(1) : '0.0';
+  t.showRate = t.appointments ? (t.attendedAppointments/t.appointments*100).toFixed(1) : '0.0';
+  t.noShowRate = t.appointments ? ((t.appointments-t.attendedAppointments)/t.appointments*100).toFixed(1) : '0.0';
+  t.costDeal = t.deals ? Math.round(t.ads/t.deals) : 0;
+  t.conv = t.leads ? (t.deals/t.leads*100).toFixed(1) : '0.0';
+  return t;
+}
+
+/* ---- Month metadata: index -> real calendar year/month (0-indexed month) ---- */
+let monthMeta=[
+  {y:2025,m:8},{y:2025,m:9},{y:2025,m:10},{y:2025,m:11},{y:2026,m:0},{y:2026,m:1},
+  {y:2026,m:2},{y:2026,m:3},{y:2026,m:4},{y:2026,m:5},{y:2026,m:6},{y:2026,m:7},{y:2026,m:8}
+];
+const calMonthNamesFull=['Janvier','F\u00e9vrier','Mars','Avril','Mai','Juin','Juillet','Ao\u00fbt','Septembre','Octobre','Novembre','D\u00e9cembre'];
+const calDayNamesShort=['Lu','Ma','Me','Je','Ve','Sa','Di'];
+
+let dashboardPeriodInitialized=false;
+async function loadDashboardData(){
+  const { data, error } = await supabaseClient
+    .from('dashboard_metrics')
+    .select('*')
+    .eq('client', activeClientName)
+    .order('periode', { ascending:true });
+
+  if(error){
+    console.error('Erreur de chargement Supabase :', error);
+    return false;
+  }
+
+  // Tant que la table est vide, la démonstration existante reste visible.
+  if(!data || data.length===0){
+    console.info('Supabase est connecté, mais aucune donnée client n’est encore enregistrée.');
+    return false;
+  }
+
+  rawDailyData = data.map(row => {
+    const ca = Number(row.ca || 0);
+    const ads = Number(row.ads || 0);
+    const leads = Number(row.leads || 0);
+    const qualifiedCalls = Number(row.qualified_calls || 0);
+    const appointments = Number(row.appointments || 0);
+    const attendedAppointments = Number(row.attended_appointments || 0);
+    const deals = Number(row.deals || 0);
+    return {
+      _date:new Date(row.periode+'T00:00:00'),
+      phase: row.phase || 'setup',
+      ca,
+      ads,
+      roas: ads ? ca/ads : 0,
+      roi: ads ? (ca-ads)/ads*100 : 0,
+      leads,
+      cpl: leads ? ads/leads : 0,
+      qualifiedCalls,
+      costQualifiedCall: qualifiedCalls ? ads/qualifiedCalls : 0,
+      appointments,
+      attendedAppointments,
+      deals,
+      costDeal: deals ? ads/deals : 0,
+      panier: deals ? ca/deals : 0,
+      conv: leads ? deals/leads*100 : 0,
+      pipeline: Number(row.pipeline || 0),
+      google: Number(row.google || 0),
+      maint: Number(row.maint || 0),
+      ia: Number(row.ia || 0)
+    };
+  });
+
+  const shortMonths=['Jan','Fév','Mar','Avr','Mai','Jun','Jul','Aoû','Sep','Oct','Nov','Déc'];
+  const dates=rawDailyData.map(row=>row._date);
+  if(!dashboardPeriodInitialized){
+    selectedStartDate=new Date(Math.min(...dates));
+    selectedEndDate=new Date(Math.max(...dates));
+    dashboardPeriodInitialized=true;
+  }
+  const firstMonth=new Date(selectedStartDate.getFullYear(),selectedStartDate.getMonth(),1);
+  const currentMonth=new Date(); currentMonth.setDate(1); currentMonth.setHours(0,0,0,0);
+  const finalMonth=new Date(Math.max(currentMonth,new Date(selectedEndDate.getFullYear(),selectedEndDate.getMonth(),1)));
+  monthMeta=[];
+  for(let d=new Date(firstMonth);d<=finalMonth;d.setMonth(d.getMonth()+1)) monthMeta.push({y:d.getFullYear(),m:d.getMonth()});
+  if(monthMeta.length===1){ const d=new Date(firstMonth); d.setMonth(d.getMonth()-1); monthMeta.unshift({y:d.getFullYear(),m:d.getMonth()}); }
+  monthLabelsFull=monthMeta.map(d=>shortMonths[d.m]+' '+String(d.y).slice(-2));
+  monthlyDataFull=getRangeData().data;
+  const clientRevenueHT = rawDailyData.reduce((sum,row)=>sum+row.ca,0);
+  const confirmedDeals = rawDailyData.reduce((sum,row)=>sum+row.deals,0);
+  const agencyCommission = clientRevenueHT * 0.02;
+  agency.ca = fmtEUR(agencyCommission);
+  agency.panier = confirmedDeals ? fmtEUR(agencyCommission/confirmedDeals) : '0 €';
+  agency.contracts[0].m = fmtEUR(agencyCommission);
+  rangeStart=0;
+  rangeEnd=monthlyDataFull.length-1;
+  calStart=new Date(selectedStartDate);
+  calEnd=new Date(selectedEndDate);
+  calLeftIdx=Math.max(0,monthMeta.length-2);
+  render();
+  return true;
+}
+
+async function loadCompetitiveIntelligence(){
+  const { data, error } = await supabaseClient
+    .from('competitive_intelligence')
+    .select('*')
+    .eq('client', activeClientName)
+    .order('week_start', { ascending:false })
+    .limit(1)
+    .maybeSingle();
+
+  if(error){
+    // La table peut ne pas encore exister pendant l'installation.
+    console.error('Erreur de chargement de la veille concurrentielle :', error);
+    return false;
+  }
+  if(!data) return false;
+
+  const marketPillar = pillars.find(p => p.id==='offre');
+  const marketWatch = marketPillar && marketPillar.automations.find(a => a.n==='Veille marché véhicules');
+  if(!marketWatch) return false;
+
+  marketWatch.d = data.summary || marketWatch.d;
+  marketWatch.res = data.status || `Mis à jour le ${new Date(data.updated_at || data.week_start).toLocaleDateString('fr-FR')}`;
+  marketWatch.freq = data.frequency || 'Chaque lundi';
+  marketWatch.verified = true;
+  if(Array.isArray(data.bullets) && data.bullets.length){
+    marketWatch.bullets = data.bullets.filter(v => typeof v==='string' && v.trim());
+  }
+  render();
+  return true;
+}
+
+async function loadAutomationLogs(){
+  const {data,error}=await supabaseClient
+    .from('automation_logs')
+    .select('*')
+    .eq('client',activeClientName)
+    .eq('verified',true)
+    .order('occurred_at',{ascending:false})
+    .limit(50);
+  if(error){ console.error('Erreur journal vérifié :',error); return false; }
+  proofEntries=(data||[]).map(row=>({
+    pillar: pillarAccentMap[row.pillar] ? row.pillar : 'reporting',
+    time: new Date(row.occurred_at).toLocaleString('fr-FR'),
+    title: row.title || 'Action vérifiée',
+    detail: row.detail || '',
+    src: row.source || 'Supabase'
+  }));
+  // Une correspondance exacte dans le journal confirme l'automation concernée.
+  pillars.forEach(p=>p.automations.forEach(a=>{
+    if(proofEntries.some(e=>e.title.toLowerCase()===a.n.toLowerCase())){
+      a.verified=true;
+      a.res='Exécution vérifiée';
+    }
+  }));
+  render();
+  return true;
+}
+
+async function loadConnectedSources(){
+  const {data,error}=await supabaseClient
+    .from('connected_sources')
+    .select('*')
+    .eq('client',activeClientName)
+    .eq('is_verified',true)
+    .order('source_name',{ascending:true});
+  if(error){ console.error('Erreur sources vérifiées :',error); return false; }
+  cerveauSources=(data||[]).map(row=>({n:row.source_name,i:row.icon||'🔗',lastSync:row.last_sync_at}));
+  render();
+  return true;
+}
+
+function subscribeToDashboardUpdates(){
+  if(realtimeSubscribed) return;
+  realtimeSubscribed=true;
+  supabaseClient
+    .channel('dashboard-metrics-live')
+    .on('postgres_changes', {
+      event:'*',
+      schema:'public',
+      table:'dashboard_metrics'
+    }, () => loadDashboardData())
+    .subscribe(status => console.info('Supabase Realtime :', status));
+
+  supabaseClient
+    .channel('competitive-intelligence-live')
+    .on('postgres_changes', {
+      event:'*',
+      schema:'public',
+      table:'competitive_intelligence'
+    }, () => loadCompetitiveIntelligence())
+    .subscribe(status => console.info('Supabase Realtime veille :', status));
+
+  supabaseClient
+    .channel('automation-logs-live')
+    .on('postgres_changes',{event:'*',schema:'public',table:'automation_logs'},()=>loadAutomationLogs())
+    .subscribe();
+
+  ['setter_daily_metrics','setter_changes','setter_leads'].forEach(t=>{
+    supabaseClient.channel(t+'-live')
+      .on('postgres_changes',{event:'*',schema:'public',table:t},()=>loadSetterData())
+      .subscribe();
+  });
+
+  supabaseClient
+    .channel('connected-sources-live')
+    .on('postgres_changes',{event:'*',schema:'public',table:'connected_sources'},()=>loadConnectedSources())
+    .subscribe();
+}
+
+
+// WhatsApp : dernier relevé d'une période complète, jamais somme de cumuls.
+let whatsappSnapshot=null;
+let whatsappState='loading';
+let whatsappRefreshPending=false;
+let whatsappPoll=null;
+async function loadWhatsAppMetrics(){
+  const client=activeClientName;
+  whatsappState='loading';
+  try {
+    const {data,error}=await withDashboardTimeout(supabaseClient.from('whatsapp_agent_metrics')
+      .select('client,period_start,period_end,observed_at,time_saved_seconds,contacts,messages,appointments,method,source')
+      .eq('client',client).order('observed_at',{ascending:false}).limit(1).maybeSingle(),15000);
+    if(client!==activeClientName || !userRole) return;
+    if(error) throw error;
+    whatsappSnapshot=data || null;
+    whatsappState=data?'ready':'empty';
+  } catch(error){
+    if(client!==activeClientName || !userRole) return;
+    whatsappSnapshot=null;
+    whatsappState='unavailable';
+  }
+  render();
+}
+async function refreshWhatsApp(){
+  if(whatsappRefreshPending) return;
+  whatsappRefreshPending=true; render();
+  try { await loadWhatsAppMetrics(); }
+  finally { whatsappRefreshPending=false; render(); }
+}
+function formatSavedTime(seconds){
+  if(seconds===null || seconds===undefined || !Number.isFinite(Number(seconds)) || Number(seconds)<0) return '—';
+  const minutes=Math.floor(Number(seconds)/60);
+  return minutes>=60 ? `${Math.floor(minutes/60)} h ${minutes%60} min` : `${minutes} min`;
+}
+function renderWhatsAppPanel(){
+  const row=whatsappState==='ready'?whatsappSnapshot:null;
+  const date=v=>{const d=new Date(v);return Number.isNaN(d.getTime())?'—':d.toLocaleString('fr-FR',{timeZone:'America/Martinique'});};
+  const number=v=>v===null || v===undefined?'—':escapeHtml(String(v));
+  const stale=row && Date.now()-new Date(row.observed_at).getTime()>86400000;
+  const status=whatsappState==='loading'?'Chargement…':row?(stale?'Relevé à actualiser':'Dernier relevé disponible'):
+    whatsappState==='empty'?'Aucun relevé enregistré':'Synchronisation à connecter ou accès indisponible';
+  return `<section class="card" style="margin:16px 0" aria-label="Activité WhatsApp">
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap">
+      <div><div class="panel-title">Agent WhatsApp · ${escapeHtml(activeClientName)}</div><div class="panel-sub">${status}</div></div>
+      <button type="button" onclick="refreshWhatsApp()" ${whatsappRefreshPending?'disabled':''} style="padding:8px 12px;border:1px solid #d3d7de;border-radius:8px;background:transparent;color:inherit;cursor:pointer">${whatsappRefreshPending?'Actualisation…':'Actualiser le relevé'}</button>
+    </div>
+    <div class="kpi-grid" style="margin-top:12px">
+      <div><div class="kpi-label">Temps gagné estimé</div><div class="kpi-value">${row?formatSavedTime(row.time_saved_seconds):'—'}</div></div>
+      <div><div class="kpi-label">Contacts accompagnés</div><div class="kpi-value">${row?number(row.contacts):'—'}</div></div>
+      <div><div class="kpi-label">Messages</div><div class="kpi-value">${row?number(row.messages):'—'}</div></div>
+      <div><div class="kpi-label">RDV attribués à l’agent</div><div class="kpi-value">${row?number(row.appointments):'—'}</div></div>
+    </div>
+    <p class="panel-sub" style="margin-top:14px">${row?`Période propre à ce relevé : ${escapeHtml(row.period_start)} au ${escapeHtml(row.period_end)} · Relevé du ${date(row.observed_at)} (Martinique).<br>Source : ${escapeHtml(row.source)} · Méthode : ${escapeHtml(row.method)}. Ce temps est une estimation, pas un chronométrage humain. Les relevés cumulés ne sont pas additionnés.`:'Les statistiques WhatsApp ne sont pas encore disponibles dans ce tableau de bord. Aucun zéro ni temps gagné fictif n’est affiché. Le bouton relit le dernier relevé enregistré ; il ne déclenche pas une collecte GHL.'}</p>
+  </section>`;
+}
+
+
+/* ============ SETTER IA (mémoire chiffrée) ============ */
+let setterMetrics=[], setterChanges=[], setterLeads=[], setterState='loading';
+async function loadSetterData(){
+  const client=activeClientName;
+  setterState='loading';
+  try{
+    const since=new Date(Date.now()-60*86400000).toISOString().slice(0,10);
+    const [m,c,l]=await Promise.all([
+      withDashboardTimeout(supabaseClient.from('setter_daily_metrics').select('*').eq('client',client).gte('day',since).order('day',{ascending:true}),15000),
+      withDashboardTimeout(supabaseClient.from('setter_changes').select('id,changed_at,change_type,objection_tag,question,new_answer,metric_name,baseline_value,baseline_sample,measured_value,measured_sample,verdict,verdict_at,applied_at').eq('client',client).order('changed_at',{ascending:false}).limit(40),15000),
+      withDashboardTimeout(supabaseClient.from('setter_leads').select('lead_date,priority,objections,rdv_booked,pipeline_stage,outcome,financing_status').eq('client',client).gte('lead_date',new Date(Date.now()-30*86400000).toISOString().slice(0,10)).limit(2000),15000)
+    ]);
+    if(client!==activeClientName || !userRole) return;
+    if(m.error||c.error||l.error) throw (m.error||c.error||l.error);
+    setterMetrics=m.data||[]; setterChanges=c.data||[]; setterLeads=l.data||[];
+    setterState=(setterMetrics.length||setterChanges.length||setterLeads.length)?'ready':'empty';
+  }catch(e){
+    if(client!==activeClientName || !userRole) return;
+    console.error('Erreur données setter :',e);
+    setterState='unavailable';
+  }
+  if(currentPage==='setter') render();
+}
+function setterPct(a,b){ return b ? Math.round(a/b*100) : null; }
+function setterFmtPct(v){ return v===null||v===undefined ? '—' : v+' %'; }
+function setterAnomalies(row){ const a=row && row.funnel && row.funnel.anomalies; if(!a || typeof a!=='object') return 0; return Object.values(a).reduce((s,v)=>s+(Number(v)||0),0); }
+function setterLineChart(series,labels){
+  const W=760,H=200,padL=34,padB=24,padT=10;
+  const all=series.flatMap(s=>s.values.filter(v=>v!==null&&v!==undefined));
+  if(labels.length<2||!all.length) return `<div style="min-height:150px;display:flex;align-items:center;justify-content:center;color:var(--text-faint);">Pas encore assez de jours enregistrés pour tracer une courbe.</div>`;
+  const maxY=Math.max(1,...all)*1.15;
+  const sx=i=>padL+i*(W-padL-10)/(labels.length-1);
+  const sy=v=>H-padB-(v/maxY)*(H-padB-padT);
+  const grid=[0,.5,1].map(f=>{const v=maxY*f;return `<line x1="${padL}" y1="${sy(v)}" x2="${W-10}" y2="${sy(v)}" stroke="#1a1d23"/><text x="2" y="${sy(v)+4}" fill="#5c6270" font-size="9">${Math.round(v)}</text>`;}).join('');
+  const lines=series.map(s=>{
+    const pts=s.values.map((v,i)=>v===null||v===undefined?null:[sx(i),sy(v),v,i]).filter(Boolean);
+    const d=pts.map((p,i)=>(i?'L':'M')+p[0]+' '+p[1]).join(' ');
+    return `<path d="${d}" fill="none" stroke="${s.color}" stroke-width="2.2"/>`+pts.map(p=>`<circle class="chart-pt" data-tip="${escapeHtml(labels[p[3]])} — ${escapeHtml(s.name)} : <b>${p[2]}${s.unit||''}</b>" cx="${p[0]}" cy="${p[1]}" r="4" fill="${s.color}"/>`).join('');
+  }).join('');
+  const step=Math.ceil(labels.length/8);
+  const xl=labels.map((l,i)=>i%step===0||i===labels.length-1?`<text x="${sx(i)}" y="${H-6}" fill="#5c6270" font-size="9" text-anchor="middle">${escapeHtml(l)}</text>`:'').join('');
+  const legend=series.map(s=>`<span style="display:inline-flex;align-items:center;gap:6px;margin-right:16px;font-size:11.5px;color:var(--text-dim)"><span class="legend-dot" style="background:${s.color}"></span>${escapeHtml(s.name)}</span>`).join('');
+  return `<div style="margin-bottom:8px">${legend}</div><svg viewBox="0 0 ${W} ${H}" style="width:100%;height:220px">${grid}${lines}${xl}</svg>`;
+}
+function renderSetterPage(){
+  if(setterState==='loading') return `<div class="card" style="padding:50px;text-align:center;color:var(--text-faint)">Chargement des données du setter…</div>`;
+  if(setterState==='unavailable') return `<div class="card" style="padding:50px;text-align:center;color:var(--text-faint)">Données du setter indisponibles pour le moment.</div>`;
+  if(setterState==='empty') return `<div class="card" style="padding:50px;text-align:center;color:var(--text-faint);line-height:1.6">La mémoire chiffrée du setter est en place.<br>Les premières données arrivent après l'analyse du soir (vers 19 h, heure de Martinique).</div>`;
+  const last=setterMetrics[setterMetrics.length-1]||{};
+  const lastN=n=>setterMetrics.slice(-n);
+  const sum=(rows,k)=>rows.reduce((s,r)=>s+(Number(r[k])||0),0);
+  const w7=lastN(7), p7=setterMetrics.slice(-14,-7);
+  const q2r7=setterPct(sum(w7,'rdv_booked'),sum(w7,'leads_qualified'));
+  const q2rPrev=setterPct(sum(p7,'rdv_booked'),sum(p7,'leads_qualified'));
+  const trend=(q2r7!==null&&q2rPrev!==null)?(q2r7-q2rPrev):null;
+  const anom7=w7.reduce((s,r)=>s+setterAnomalies(r),0);
+  const medianKey=last.funnel && typeof last.funnel==='object' ? Object.keys(last.funnel).find(k=>/m[ée]dian/i.test(k)) : null;
+  const median=medianKey && typeof last.funnel[medianKey]!=='object' ? last.funnel[medianKey] : null;
+  // Tunnel réel (30 jours)
+  const booked=setterLeads.filter(l=>l.rdv_booked);
+  const stageCount={}; booked.forEach(l=>{const k=l.pipeline_stage||'RDV calé'; stageCount[k]=(stageCount[k]||0)+1;});
+  const signed=setterLeads.filter(l=>l.outcome==='signé').length, lost=setterLeads.filter(l=>l.outcome==='perdu').length;
+  const stagesOrder=['RDV calé','À reprogrammer','Proposition à envoyer','Proposition envoyée','En attente client','Signé','Livré','Perdu'];
+  const stageRows=stagesOrder.filter(s=>stageCount[s]).concat(Object.keys(stageCount).filter(s=>!stagesOrder.includes(s)));
+  // Objections (30 jours)
+  const obj={}; setterLeads.forEach(l=>(l.objections||[]).forEach(t=>{obj[t]=obj[t]||{n:0,r:0}; obj[t].n++; if(l.rdv_booked) obj[t].r++;}));
+  const objRows=Object.entries(obj).sort((a,b)=>b[1].n-a[1].n).slice(0,10);
+  const labels=setterMetrics.map(r=>new Date(r.day+'T00:00:00').toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit'}));
+  const verdictLabel={en_test:'En test',garde:'Gardée',annule:'Annulée',non_concluant:'Non concluant'};
+  const verdictColor={en_test:'var(--orange)',garde:'var(--green)',annule:'var(--red)',non_concluant:'var(--text-faint)'};
+  const typeLabel=t=>t==='faq_revert'?'Retour arrière':t&&t.startsWith('prompt')?'Règle de comportement':t==='faq_anomalie'?'Correction d’anomalie':'Réponse apprise';
+  const tested=setterChanges.filter(c=>c.verdict&&c.verdict!=='en_test'), kept=tested.filter(c=>c.verdict==='garde').length;
+  return `
+  <div class="kpi-grid" style="grid-template-columns:repeat(4,1fr);">
+    <div class="card"><div class="kpi-label">Taux qualifié → RDV (7 j)</div><div class="kpi-value">${setterFmtPct(q2r7)}</div><div class="kpi-sub ${trend>0?'up':''}">${trend===null?'Tendance disponible après 2 semaines':(trend>=0?'▲ +':'▼ ')+trend+' pts vs 7 jours précédents'}</div></div>
+    <div class="card"><div class="kpi-label">RDV bookés (7 j)</div><div class="kpi-value">${sum(w7,'rdv_booked')}</div><div class="kpi-sub">dont ${sum(w7,'rdv_booked_p1')} prospects prioritaires</div></div>
+    <div class="card"><div class="kpi-label">Anomalies (7 j)</div><div class="kpi-value">${anom7}</div><div class="kpi-sub">chacune corrigée le soir même</div></div>
+    <div class="card"><div class="kpi-label">Durée de qualification</div><div class="kpi-value">${median!=null?escapeHtml(String(median))+'<span class="kpi-unit">min</span>':'—'}</div><div class="kpi-sub">médiane du dernier jour · objectif 5 à 10 min</div></div>
+  </div>
+  <div class="card" style="margin-top:14px;">
+    <div class="panel-title">Progression du setter</div>
+    <div class="panel-sub">Relevé quotidien — ${setterMetrics.length} jour(s) enregistré(s)</div>
+    ${setterLineChart([
+      {name:'Taux qualifié → RDV',color:'#4fb87a',unit:' %',values:setterMetrics.map(r=>setterPct(Number(r.rdv_booked)||0,Number(r.leads_qualified)||0))}
+    ],labels)}
+  </div>
+  <div class="card" style="margin-top:14px;">
+    <div class="panel-title">RDV bookés et anomalies par jour</div>
+    <div class="panel-sub">Les anomalies doivent baisser pendant que les RDV montent</div>
+    ${setterLineChart([
+      {name:'RDV bookés',color:'#5B82D4',values:setterMetrics.map(r=>Number(r.rdv_booked)||0)},
+      {name:'Anomalies',color:'#e2694a',values:setterMetrics.map(r=>setterAnomalies(r))}
+    ],labels)}
+  </div>
+  <div class="row2" style="grid-template-columns:1fr 1fr;">
+    <div class="card">
+      <div class="panel-title">Tunnel de vente réel (30 j)</div>
+      <div class="panel-sub">${booked.length} RDV · ${signed} signé(s) · ${lost} perdu(s) — mis à jour après chaque retour de Philippe</div>
+      ${stageRows.length?stageRows.map(s=>{const n=stageCount[s];const w=booked.length?Math.round(n/booked.length*100):0;return `<div class="progress-row"><span>${escapeHtml(s)}</span><b>${n}</b></div><div class="progress-bar"><div class="progress-bar-fill" style="width:${w}%"></div></div>`;}).join(''):'<div class="panel-sub">Aucun RDV enregistré sur la période.</div>'}
+    </div>
+    <div class="card">
+      <div class="panel-title">Objections les plus fréquentes (30 j)</div>
+      <div class="panel-sub">Nombre de prospects et part qui a quand même réservé un RDV</div>
+      ${objRows.length?`<table class="contracts-table"><tr><th>Objection</th><th>Prospects</th><th>RDV</th></tr>${objRows.map(([t,v])=>`<tr><td>${escapeHtml(t.replace(/_/g,' '))}</td><td>${v.n}</td><td>${setterFmtPct(setterPct(v.r,v.n))}</td></tr>`).join('')}</table>`:'<div class="panel-sub">Aucune objection enregistrée pour l’instant.</div>'}
+    </div>
+  </div>
+  <div class="card" style="margin-top:14px;">
+    <div class="panel-title">Ce que le setter a appris</div>
+    <div class="panel-sub">Chaque amélioration est testée sur les prospects suivants puis gardée ou annulée selon les résultats${tested.length?` · ${kept} gardée(s) sur ${tested.length} testée(s)`:''}</div>
+    ${setterChanges.length?`<div class="proof-feed">${setterChanges.slice(0,15).map(c=>{
+      const before=c.baseline_value!=null?Number(c.baseline_value):null, after=c.measured_value!=null?Number(c.measured_value):null;
+      const isRate=c.metric_name==='taux_rdv_apres_objection';
+      const fmt=v=>v===null?'—':(isRate?Math.round(v)+' %':(Math.round(v*10)/10)+'/j');
+      return `<div class="proof-item"><div class="proof-dot" style="background:${verdictColor[c.verdict]||'var(--text-faint)'}"></div><div class="proof-body">
+        <div class="proof-top"><span class="proof-tag" style="color:${verdictColor[c.verdict]||'var(--text-dim)'}">${verdictLabel[c.verdict]||escapeHtml(c.verdict||'')}</span><span class="proof-time">${new Date(c.changed_at).toLocaleDateString('fr-FR')}</span></div>
+        <div class="proof-title">${typeLabel(c.change_type)}${c.objection_tag?' · '+escapeHtml(c.objection_tag.replace(/_/g,' ')):''}</div>
+        ${c.question?`<div class="proof-detail"><b>Situation :</b> ${escapeHtml(c.question)}</div>`:''}
+        ${c.new_answer?`<div class="proof-detail"><b>${c.change_type&&c.change_type.startsWith('prompt')?'Règle':'Réponse'} :</b> ${escapeHtml(c.new_answer)}</div>`:''}
+        <div class="proof-src">${isRate?'Taux de RDV après cette objection':'Fréquence de l’anomalie'} : avant ${fmt(before)}${before!==null&&c.baseline_sample?` (${c.baseline_sample} ${isRate?'prospects':'jours'})`:''} → après ${fmt(after)}${after!==null&&c.measured_sample?` (${c.measured_sample} ${isRate?'prospects':'jours'})`:''}</div>
+      </div></div>`;}).join('')}</div>`:'<div class="panel-sub">Les premières améliorations apparaîtront après l’analyse du soir.</div>'}
+  </div>`;
+}
+
+async function loadAllDashboardData(){
+  await Promise.all([
+    loadDashboardData(),
+    loadCompetitiveIntelligence(),
+    loadAutomationLogs(),
+    loadConnectedSources(),
+    loadWhatsAppMetrics(),
+    loadSetterData()
+  ]);
+  subscribeToDashboardUpdates();
+  if(!whatsappPoll) whatsappPoll=setInterval(()=>{if(userRole && !document.hidden) loadWhatsAppMetrics();},60000);
+}
+
+async function initializeDashboard(){
+  render();
+  const {data:{session}}=await supabaseClient.auth.getSession();
+  if(!session) return;
+  const {data:profile}=await supabaseClient
+    .from('dashboard_users')
+    .select('role,client')
+    .eq('user_id',session.user.id)
+    .maybeSingle();
+  if(!profile) return;
+  userRole=profile.role;
+  activeClientName=profile.client || activeClientName;
+  document.getElementById('loginGate').style.display='none';
+  document.getElementById('appShell').style.display='flex';
+  currentView=userRole==='agence'?'agence':'client';
+  applyRolePermissions();
+  render();
+  await loadAllDashboardData();
+}
+
+function monthIndexOf(date){
+  for(let i=0;i<monthMeta.length;i++){
+    if(monthMeta[i].y===date.getFullYear() && monthMeta[i].m===date.getMonth()) return i;
+  }
+  return date < new Date(monthMeta[0].y,monthMeta[0].m,1) ? 0 : monthMeta.length-1;
+}
+function fmtDDMMYYYY(d){
+  const dd=String(d.getDate()).padStart(2,'0'), mm=String(d.getMonth()+1).padStart(2,'0');
+  return dd+'/'+mm+'/'+d.getFullYear();
+}
+function parseDDMMYYYY(s){
+  const m = s.trim().match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+  if(!m) return null;
+  const d = new Date(parseInt(m[3]), parseInt(m[2])-1, parseInt(m[1]));
+  return isNaN(d.getTime()) ? null : d;
+}
+
+let calStart = new Date(monthMeta[0].y, monthMeta[0].m, 1);
+let calEnd = new Date(monthMeta[monthMeta.length-1].y, monthMeta[monthMeta.length-1].m+1, 0);
+let calLeftIdx = 11; // shows months 11 & 12 by default (F\u00e9v 2026 / Mars 2026), matching the full range's tail
+let currentShortcut = 'all';
+
+const dateShortcuts=[
+  {id:'today',     label:"Aujourd'hui"},
+  {id:'yesterday', label:'Hier'},
+  {id:'7d',        label:'7 derniers jours'},
+  {id:'30d',       label:'30 derniers jours'},
+  {id:'thismonth', label:'Ce mois'},
+  {id:'lastmonth', label:'Mois dernier'},
+  {id:'3m',        label:'3 derniers mois'},
+  {id:'12m',       label:'12 derniers mois'},
+  {id:'all',       label:'Tout'}
+];
+
+function toggleDatePicker(e){
+  if(e) e.stopPropagation();
+  const panel=document.getElementById('datePickerPanel');
+  const isOpen = panel.classList.contains('open');
+  if(isOpen){ panel.classList.remove('open'); return; }
+  calStart = new Date(selectedStartDate);
+  calEnd = new Date(selectedEndDate);
+  currentShortcut = currentDatePreset==='full' ? 'all' : null;
+  calLeftIdx = Math.max(0, Math.min(monthIndexOf(calEnd)-1, monthMeta.length-2));
+  panel.innerHTML = renderDatePickerPanel();
+  panel.classList.add('open');
+}
+document.addEventListener('click', function(e){
+  const panel=document.getElementById('datePickerPanel');
+  const btn=document.getElementById('datePillBtn');
+  if(!panel || !panel.classList.contains('open')) return;
+  // Use composedPath (captured at dispatch time) instead of e.target: clicks inside
+  // the panel re-render its innerHTML, which detaches e.target from the DOM before
+  // this listener runs, making panel.contains(e.target) wrongly return false.
+  const path = typeof e.composedPath === 'function' ? e.composedPath() : [];
+  const clickedInside = path.includes(panel) || path.includes(btn);
+  if(!clickedInside){
+    panel.classList.remove('open');
+  }
+});
+
+function renderMiniCalendar(leftOrRight){
+  const idx = leftOrRight==='left' ? calLeftIdx : calLeftIdx+1;
+  const {y,m} = monthMeta[idx];
+  const first = new Date(y,m,1);
+  let startWeekday = (first.getDay()+6)%7; // Mon=0
+  const daysInMonth = new Date(y,m+1,0).getDate();
+  let cells='';
+  for(let i=0;i<startWeekday;i++) cells += '<div></div>';
+  for(let d=1; d<=daysInMonth; d++){
+    const date = new Date(y,m,d);
+    const isStart = calStart && date.getTime()===calStart.getTime();
+    const isEnd = calEnd && date.getTime()===calEnd.getTime();
+    const inRange = calStart && calEnd && date>calStart && date<calEnd;
+    let cls='dp-day';
+    if(isStart||isEnd) cls+=' dp-day-selected';
+    else if(inRange) cls+=' dp-day-inrange';
+    cells += `<button type="button" class="${cls}" onclick="pickCalDay(${y},${m},${d})">${d}</button>`;
+  }
+  return `
+    <div class="dp-cal-month">
+      <div class="dp-cal-month-head">
+        ${leftOrRight==='left' ? '<button type="button" class="dp-cal-arrow" onclick="calShiftMonths(-1)">\u2039</button>' : '<span style="width:22px;"></span>'}
+        <span>${calMonthNamesFull[m]} ${y}</span>
+        ${leftOrRight==='right' ? '<button type="button" class="dp-cal-arrow" onclick="calShiftMonths(1)">\u203a</button>' : '<span style="width:22px;"></span>'}
+      </div>
+      <div class="dp-cal-daynames">${calDayNamesShort.map(n=>`<div>${n}</div>`).join('')}</div>
+      <div class="dp-cal-days">${cells}</div>
+    </div>
+  `;
+}
+
+function renderDatePickerPanel(){
+  return `
+    <div class="dp-panel-flex">
+      <div class="dp-sidebar">
+        <div class="dp-title" style="margin-bottom:8px;">Raccourcis</div>
+        ${dateShortcuts.map(s=>`
+          <button type="button" class="dp-preset ${currentShortcut===s.id?'active':''}" onclick="applyShortcut('${s.id}')">${s.label}</button>
+        `).join('')}
+        <div class="dp-divider"></div>
+        <div class="dp-title" style="margin-bottom:8px;">Par mois</div>
+        <div class="dp-month-pills">
+          ${monthLabelsFull.map((l,i)=>`<button type="button" class="dp-month-pill" onclick="applyMonthPill(${i})">${l}</button>`).join('')}
+        </div>
+      </div>
+      <div class="dp-main">
+        <div class="dp-fields">
+          <div class="dp-field">
+            <label>D\u00e9but</label>
+            <input type="text" id="dpFieldStart" value="${calStart?fmtDDMMYYYY(calStart):''}" onchange="onFieldChange('start', this.value)">
+          </div>
+          <span class="dp-arrow-sep">\u2192</span>
+          <div class="dp-field">
+            <label>Fin</label>
+            <input type="text" id="dpFieldEnd" value="${calEnd?fmtDDMMYYYY(calEnd):''}" onchange="onFieldChange('end', this.value)">
+          </div>
+        </div>
+        <div class="dp-cal-pair">
+          ${renderMiniCalendar('left')}
+          ${renderMiniCalendar('right')}
+        </div>
+        <div class="dp-actions">
+          <button type="button" class="dp-cancel" onclick="cancelDatePicker()">Annuler</button>
+          <button type="button" class="dp-apply" style="width:auto;padding:9px 22px;" onclick="applyCustomRange()" ${(!calStart||!calEnd)?'disabled':''}>Appliquer</button>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function refreshPanel(){
+  document.getElementById('datePickerPanel').innerHTML = renderDatePickerPanel();
+}
+
+function pickCalDay(y,m,d){
+  const clicked = new Date(y,m,d);
+  currentShortcut = null;
+  if(!calStart || (calStart && calEnd)){
+    calStart = clicked; calEnd = null;
+  }else if(clicked < calStart){
+    calEnd = calStart; calStart = clicked;
+  }else{
+    calEnd = clicked;
+  }
+  refreshPanel();
+}
+
+function calShiftMonths(delta){
+  calLeftIdx = Math.max(0, Math.min(calLeftIdx+delta, monthMeta.length-2));
+  refreshPanel();
+}
+
+function onFieldChange(which, val){
+  const d = parseDDMMYYYY(val);
+  if(!d) { refreshPanel(); return; }
+  currentShortcut = null;
+  if(which==='start'){ calStart = d; if(calEnd && calEnd<calStart){ calEnd=null; } }
+  else { calEnd = d; if(calStart && calEnd<calStart){ calStart=null; } }
+  calLeftIdx = Math.max(0, Math.min(monthIndexOf(d)-(which==='end'?1:0), monthMeta.length-2));
+  refreshPanel();
+}
+
+function applyMonthPill(i){
+  currentShortcut = null;
+  calStart = new Date(monthMeta[i].y, monthMeta[i].m, 1);
+  calEnd = new Date(monthMeta[i].y, monthMeta[i].m+1, 0);
+  calLeftIdx = Math.max(0, Math.min(i-1, monthMeta.length-2));
+  refreshPanel();
+}
+
+function applyShortcut(id){
+  currentShortcut = id;
+  const today=new Date(); today.setHours(0,0,0,0);
+  const lastIdx = monthMeta.length-1;
+  if(id==='today'){
+    calStart=new Date(today); calEnd=new Date(today);
+  }else if(id==='yesterday'){
+    calStart=new Date(today); calStart.setDate(calStart.getDate()-1); calEnd=new Date(calStart);
+  }else if(id==='7d'){
+    calEnd=new Date(today); calStart=new Date(today); calStart.setDate(calStart.getDate()-6);
+  }else if(id==='30d'){
+    calEnd=new Date(today); calStart=new Date(today); calStart.setDate(calStart.getDate()-29);
+  }else if(id==='thismonth'){
+    calStart=new Date(today.getFullYear(),today.getMonth(),1); calEnd=new Date(today);
+  }else if(id==='lastmonth'){
+    calStart=new Date(today.getFullYear(),today.getMonth()-1,1);
+    calEnd=new Date(today.getFullYear(),today.getMonth(),0);
+  }else if(id==='3m'){
+    calStart=new Date(today.getFullYear(),today.getMonth()-2,1); calEnd=new Date(today);
+  }else if(id==='12m'){
+    calStart=new Date(today.getFullYear(),today.getMonth()-11,1); calEnd=new Date(today);
+  }else if(id==='all'){
+    calStart=rawDailyData.length?new Date(Math.min(...rawDailyData.map(r=>r._date))):new Date(monthMeta[0].y,monthMeta[0].m,1);
+    calEnd=rawDailyData.length?new Date(Math.max(...rawDailyData.map(r=>r._date))):new Date(today);
+  }
+  calLeftIdx = Math.max(0, Math.min(monthIndexOf(calEnd)-1, monthMeta.length-2));
+  refreshPanel();
+}
+
+function cancelDatePicker(){
+  document.getElementById('datePickerPanel').classList.remove('open');
+}
+
+function applyCustomRange(){
+  if(!calStart || !calEnd) return;
+  selectedStartDate=new Date(calStart);
+  selectedEndDate=new Date(calEnd);
+  rangeStart = monthIndexOf(calStart);
+  rangeEnd = monthIndexOf(calEnd);
+  if(rangeStart>rangeEnd){ const t=rangeStart; rangeStart=rangeEnd; rangeEnd=t; }
+  currentDatePreset = currentShortcut==='all' ? 'full' : 'custom';
+  finalizeDateChange();
+}
+
+function finalizeDateChange(){
+  const label = selectedStartDate.getTime()===selectedEndDate.getTime()
+    ? fmtDDMMYYYY(selectedStartDate)
+    : fmtDDMMYYYY(selectedStartDate)+' \u2014 '+fmtDDMMYYYY(selectedEndDate);
+  document.getElementById('dateRangeLabel').textContent = label;
+  document.getElementById('datePickerPanel').classList.remove('open');
+  render();
+}
+
+function setClient(name){
+  document.querySelector('.client-sub').textContent = 'Client actif · high ticket';
+  render();
+}
+
+let currentView='client';
+let currentPage='architecture';
+let openPillar='offre';
+let openAuto={};
+
+function setView(v){
+  currentView=v;
+  document.getElementById('btnClient').classList.toggle('active', v==='client');
+  document.getElementById('btnAgence').classList.toggle('active', v==='agence');
+  render();
+}
+
+document.querySelectorAll('.nav-item[data-page]').forEach(item=>{
+  item.addEventListener('click',()=>{
+    document.querySelectorAll('.nav-item').forEach(i=>i.classList.remove('active'));
+    item.classList.add('active');
+    currentPage=item.dataset.page;
+    render();
+  });
+});
+
+function render(){
+  const content=document.getElementById('content');
+  const titleEl=document.getElementById('pageTitle');
+  const subEl=document.getElementById('pageSub');
+
+  // The date picker only filters the single-client monthly series (rangeStart/rangeEnd).
+  // The Vue Agence snapshot is a separate fixed-period rollup that the calendar can't
+  // filter, so disable/relabel the pill there instead of leaving a picker that silently
+  // does nothing.
+  const datePill = document.getElementById('datePillBtn');
+  const dateLabelSpan = document.getElementById('dateRangeLabel');
+  const isAgencySnapshot = (currentPage==='overview' && currentView==='agence');
+  if(datePill && dateLabelSpan){
+    if(isAgencySnapshot){
+      datePill.classList.add('date-pill-disabled');
+      datePill.removeAttribute('onclick');
+      datePill.title = "Vue agence : historique disponible, non filtrable — passez en Vue Client pour choisir une période.";
+      dateLabelSpan.textContent = 'Historique disponible (agence)';
+    }else{
+      datePill.classList.remove('date-pill-disabled');
+      datePill.setAttribute('onclick','toggleDatePicker(event)');
+      datePill.title = '';
+      dateLabelSpan.textContent = selectedStartDate.getTime()===selectedEndDate.getTime()
+        ? fmtDDMMYYYY(selectedStartDate)
+        : fmtDDMMYYYY(selectedStartDate)+' — '+fmtDDMMYYYY(selectedEndDate);
+    }
+  }
+
+  if(currentPage==='overview'){
+    if(currentView==='agence'){
+      titleEl.textContent="Vue d'ensemble";
+      subEl.textContent="Agence Acquisition Scale Partner · "+agency.clients+" clients accompagnés";
+      content.innerHTML = renderOverview();
+    }else{
+      titleEl.textContent="Vue d'ensemble";
+      subEl.textContent=activeClientName+" · Données en cours de collecte";
+      content.innerHTML = renderClientOverview();
+    }
+    return;
+  }
+
+  if(currentPage==='acquisition'){
+    titleEl.textContent="Acquisition";
+    subEl.textContent="Leads, CPL, budget ads et sources de trafic";
+    content.innerHTML = renderAcquisitionPage();
+    return;
+  }
+
+  if(currentPage==='ventes'){
+    titleEl.textContent="Ventes";
+    subEl.textContent="Deals, panier moyen et taux de conversion";
+    content.innerHTML = renderVentesPage();
+    return;
+  }
+
+  if(currentPage==='activite'){
+    titleEl.textContent="Activité IA";
+    subEl.textContent="Automations actives et tâches traitées par l'IA";
+    content.innerHTML = renderActivitePage();
+    return;
+  }
+
+  if(currentPage==='setter'){
+    titleEl.textContent="Setter IA";
+    subEl.textContent="Qualification WhatsApp · apprentissage quotidien à partir des données réelles";
+    content.innerHTML = renderSetterPage();
+    return;
+  }
+
+  if(currentPage==='architecture'){
+    titleEl.textContent="Architecture";
+    subEl.textContent="Infrastructure Acquisition Scale Partner — 5 piliers";
+    content.innerHTML = renderArchitecture();
+    attachArchitectureEvents();
+    return;
+  }
+
+  if(currentPage==='cerveau'){
+    titleEl.textContent="Second cerveau";
+    subEl.textContent="Toutes vos sources dans une source de vérité unique";
+    content.innerHTML = renderCerveau();
+    return;
+  }
+
+  if(currentPage==='preuves'){
+    titleEl.textContent="Micro-preuves";
+    subEl.textContent="Chaque automation, tracée en temps réel";
+    content.innerHTML = renderPreuvesPage();
+    return;
+  }
+
+  // generic placeholder pages
+  const names={};
+  titleEl.textContent=names[currentPage]||'Vue d\'ensemble';
+  subEl.textContent=activeClientName;
+  content.innerHTML = `<div class="card" style="padding:60px;text-align:center;color:var(--text-faint);">
+    Cette section arrive bientôt.
+  </div>`;
+}
+
+function revenueChart(){
+  const pts=[[0,3.8],[60,16.2],[120,33.2],[180,47.6],[240,52.9]];
+  const proj=[[240,52.9],[320,76.6],[400,89.5]];
+  const maxY=100, W=420, H=200, padL=30, padB=20;
+  const sx=x=>padL + (x/400)*(W-padL-10);
+  const sy=y=>H-padB - (y/maxY)*(H-padB-10);
+  const path=pts.map((p,i)=>(i===0?'M':'L')+sx(p[0])+' '+sy(p[1])).join(' ');
+  const projPath=proj.map((p,i)=>(i===0?'M':'L')+sx(p[0])+' '+sy(p[1])).join(' ');
+  return `<svg viewBox="0 0 ${W+20} ${H+30}" style="width:100%;height:220px;">
+    ${[0,25,50,75,100].map(v=>`<line x1="${padL}" y1="${sy(v)}" x2="${W}" y2="${sy(v)}" stroke="#1a1d23" stroke-width="1"/>
+    <text x="4" y="${sy(v)+4}" fill="#5c6270" font-size="9">${v}k</text>`).join('')}
+    <path d="${path}" fill="none" stroke="var(--blue)" stroke-width="2.5"/>
+    <path d="${projPath}" fill="none" stroke="#7be3a3" stroke-width="2" stroke-dasharray="5,4"/>
+    ${pts.map(p=>`<circle class="chart-pt chart-pop" data-tip="CA semaine ${p[0]/60+1}: <b>${p[1]}k €</b>" cx="${sx(p[0])}" cy="${sy(p[1])}" r="5.5" fill="var(--blue)"/>`).join('')}
+    ${proj.slice(1).map(p=>`<circle class="chart-pt chart-pop" data-tip="Projection à ${p[0]}j: <b>${p[1]}k €</b>" cx="${sx(p[0])}" cy="${sy(p[1])}" r="5.5" fill="#7be3a3"/>
+      <text x="${sx(p[0])-10}" y="${sy(p[1])-10}" fill="#7be3a3" font-size="11" font-weight="700">${p[1]}k</text>`).join('')}
+    <text x="${padL}" y="${H+18}" fill="#5c6270" font-size="9">démarrage</text>
+    <text x="${W-30}" y="${H+18}" fill="#5c6270" font-size="9">60j</text>
+  </svg>`;
+}
+
+function donutChart(){
+  const data=[{l:'Commission variable',sub:'2 % des ventes HT',amt:agency.contracts[0].m,c:'#5B82D4'},{l:'Mensuel fixe',sub:'aucun',amt:'0 €',c:'#4fb87a'},{l:'Setup encaissé',sub:'actuellement',amt:agency.contracts[0].setup,c:'#333'}];
+  return `<div class="donut-wrap">
+    <svg width="110" height="110" viewBox="0 0 110 110">
+      <circle cx="55" cy="55" r="42" fill="none" stroke="#22262e" stroke-width="14"/>
+      <text x="55" y="52" text-anchor="middle" fill="#eef0f3" font-size="14" font-weight="800">${agency.ca}</text>
+      <text x="55" y="66" text-anchor="middle" fill="#5c6270" font-size="8">encaissé</text>
+    </svg>
+    <div style="flex:1;">
+      ${data.map(d=>`<div class="legend-item"><span class="legend-dot" style="background:${d.c}"></span><span class="lab">${d.l}<span class="sub">${d.sub}</span></span><span class="amt">${d.amt}</span></div>`).join('')}
+    </div>
+  </div>`;
+}
+
+function renderOverview(){
+  return `
+  ${renderWhatsAppPanel()}
+  <div class="card" style="display:flex;align-items:center;gap:16px;margin-bottom:16px;border-color:rgba(91,130,212,0.2);background:linear-gradient(90deg,rgba(91,130,212,0.05),transparent);">
+    <div style="width:36px;height:36px;border-radius:10px;background:rgba(91,130,212,0.12);display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0;">🧬</div>
+    <div style="flex:1;font-size:13.5px;color:var(--text-dim);line-height:1.5;">Agence développée sur le modèle <b style="color:var(--text);">Acquisition Scale Partner</b> : peu de clients, high ticket. RAV Distribution Automobiles est le premier client accompagné.</div>
+  </div>
+
+  <div class="kpi-grid">
+    <div class="card"><div class="kpi-label">Revenu agence</div><div class="kpi-value">${agency.ca}</div><div class="kpi-sub">Commission calculée sur les ventes HT · paiement non vérifié</div></div>
+    <div class="card"><div class="kpi-label">Clients actifs</div><div class="kpi-value">${agency.clients}</div><div class="kpi-sub">RAV Distribution Automobiles</div></div>
+    <div class="card"><div class="kpi-label">Commission moyenne par vente</div><div class="kpi-value">${agency.panier}</div><div class="kpi-sub">Sur les ventes confirmées</div></div>
+    <div class="card"><div class="kpi-label">Commission contractuelle</div><div class="kpi-value">${agency.part}</div><div class="kpi-sub">Prix HT du véhicule vendu</div></div>
+  </div>
+
+  <div class="row2">
+    <div class="card">
+      <div class="panel-title">Commissions calculées de l'agence</div>
+      <div class="panel-sub">Aucune projection fictive · calcul sur les ventes HT confirmées</div>
+      <div style="display:flex;align-items:center;justify-content:center;min-height:220px;flex-direction:column;gap:8px;">
+        <div style="font-size:42px;font-weight:800;">${agency.ca}</div>
+        <div style="font-size:12px;color:var(--text-dim);">2 % du chiffre d'affaires HT des véhicules vendus</div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="panel-title">Structure du revenu</div>
+      <div class="panel-sub">Contrat en cours</div>
+      ${donutChart()}
+    </div>
+  </div>
+
+  <div class="card" style="margin-top:14px;">
+    <div class="panel-title">Contrat</div>
+    <table class="contracts-table">
+      <thead><tr><th>Client</th><th>Fixe / Variable</th><th>Setup facturé</th><th>Mensuel</th></tr></thead>
+      <tbody>
+        ${agency.contracts.map(c=>`
+          <tr>
+            <td><div class="cname">${c.n}</div><div class="csub">${c.sub}</div></td>
+            <td style="color:var(--text-dim);font-size:12px;">${c.f} sur chaque véhicule vendu</td>
+            <td>${c.setup}</td>
+            <td style="font-weight:700;">${c.m}</td>
+          </tr>`).join('')}
+      </tbody>
+    </table>
+  </div>
+  `;
+}
+
+function labelStep(n){ return n<=6 ? 1 : (n<=10 ? 2 : 2); }
+
+function monthBarChart(values, labels, color, opts){
+  opts=opts||{};
+  const W=980,H=250,padL=48,padB=26,padT=14;
+  const maxV = opts.max || Math.ceil(Math.max(...values)*1.15/10)*10 || 1;
+  const bw = (W-padL-10)/values.length*0.62;
+  const step = (W-padL-10)/values.length;
+  const sy = v => H-padB - (v/maxV)*(H-padB-padT);
+  const ticks=[0,0.25,0.5,0.75,1].map(f=>Math.round(maxV*f));
+  const ls = labelStep(labels.length);
+  return `<svg viewBox="0 0 ${W} ${H+26}" style="width:100%;height:320px;">
+    ${ticks.map(v=>`<line x1="${padL}" y1="${sy(v)}" x2="${W-4}" y2="${sy(v)}" stroke="#1a1d23" stroke-width="1"/>
+    <text x="4" y="${sy(v)+4}" fill="#5c6270" font-size="13" font-weight="600">${opts.fmt?opts.fmt(v):v}</text>`).join('')}
+    ${values.map((v,i)=>{
+      const x = padL + i*step + (step-bw)/2;
+      const y = sy(v);
+      const tipVal = opts.fmt ? opts.fmt(v) : v;
+      return `<rect class="chart-hit chart-pop" data-tip="${labels[i]}: <b>${tipVal}</b>" x="${x}" y="${y}" width="${bw}" height="${H-padB-y}" rx="4" fill="${color}"/>`;
+    }).join('')}
+    ${labels.map((l,i)=> i%ls===0 ? `<text x="${padL+i*step+step/2}" y="${H+18}" fill="#5c6270" font-size="11.5" text-anchor="middle">${l}</text>` : '').join('')}
+  </svg>`;
+}
+
+function monthLineChart(values, labels, color, opts){
+  opts=opts||{};
+  const W=980,H=250,padL=48,padB=26,padT=14;
+  const minV = opts.min!==undefined?opts.min:Math.floor(Math.min(...values)*0.9);
+  const maxV = opts.max!==undefined?opts.max:Math.ceil(Math.max(...values)*1.1);
+  const step=values.length>1 ? (W-padL-10)/(values.length-1) : 0;
+  const sy=v=>H-padB-((v-minV)/(maxV-minV||1))*(H-padB-padT);
+  const sx=i=>padL+i*step;
+  const path=values.map((v,i)=>(i===0?'M':'L')+sx(i)+' '+sy(v)).join(' ');
+  const area=path+` L${sx(values.length-1)} ${H-padB} L${sx(0)} ${H-padB} Z`;
+  const ticks=[minV, (minV+maxV)/2, maxV];
+  const ls = labelStep(labels.length);
+  return `<svg viewBox="0 0 ${W} ${H+26}" style="width:100%;height:320px;">
+    ${ticks.map(v=>`<line x1="${padL}" y1="${sy(v)}" x2="${W-4}" y2="${sy(v)}" stroke="#1a1d23" stroke-width="1"/>
+    <text x="4" y="${sy(v)+4}" fill="#5c6270" font-size="13" font-weight="600">${opts.fmt?opts.fmt(v):Math.round(v)}</text>`).join('')}
+    <path d="${area}" fill="${color}" opacity="0.08"/>
+    <path d="${path}" fill="none" stroke="${color}" stroke-width="3"/>
+    ${values.map((v,i)=>`<circle class="chart-pt chart-pop" data-tip="${labels[i]}: <b>${opts.fmt?opts.fmt(v):Math.round(v)}</b>" cx="${sx(i)}" cy="${sy(v)}" r="5.5" fill="${color}"/>`).join('')}
+    ${labels.map((l,i)=> i%ls===0 ? `<text x="${sx(i)}" y="${H+18}" fill="#5c6270" font-size="11.5" text-anchor="middle">${l}</text>` : '').join('')}
+  </svg>`;
+}
+
+function monthDualLineChart(labels, valuesA,colorA,labelA,valuesB,colorB,labelB,opts){
+  opts=opts||{};
+  const fmtA=opts.fmtA||((v)=>fmtNum(Math.round(v))+' €');
+  const fmtB=opts.fmtB||((v)=>v.toFixed(1)+'%');
+  const W=980,H=260,padL=52,padR=52,padB=26,padT=14;
+  const minA=Math.floor(Math.min(...valuesA)*0.92), maxA=Math.ceil(Math.max(...valuesA)*1.05);
+  const minB=Math.floor(Math.min(...valuesB)*0.85), maxB=Math.ceil(Math.max(...valuesB)*1.1);
+  const step=valuesA.length>1 ? (W-padL-padR)/(valuesA.length-1) : 0;
+  const syA=v=>H-padB-((v-minA)/((maxA-minA)||1))*(H-padB-padT);
+  const syB=v=>H-padB-((v-minB)/((maxB-minB)||1))*(H-padB-padT);
+  const sx=i=>padL+i*step;
+  const pathA=valuesA.map((v,i)=>(i===0?'M':'L')+sx(i)+' '+syA(v)).join(' ');
+  const pathB=valuesB.map((v,i)=>(i===0?'M':'L')+sx(i)+' '+syB(v)).join(' ');
+  const ticksA=[minA,(minA+maxA)/2,maxA];
+  const ticksB=[minB,(minB+maxB)/2,maxB];
+  const ls = labelStep(labels.length);
+  return `<div style="display:flex;align-items:center;gap:14px;margin-bottom:8px;font-size:12px;color:var(--text-dim);justify-content:flex-end;">
+    <span><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${colorA};margin-right:5px;"></span>${labelA}</span>
+    <span><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${colorB};margin-right:5px;"></span>${labelB}</span>
+  </div>
+  <svg viewBox="0 0 ${W} ${H+26}" style="width:100%;height:340px;">
+    ${ticksA.map(v=>`<text x="4" y="${syA(v)+4}" fill="${colorA}" font-size="13" font-weight="600">${fmtA(v)}</text>`).join('')}
+    ${ticksB.map(v=>`<text x="${W-46}" y="${syB(v)+4}" fill="${colorB}" font-size="13" font-weight="600">${fmtB(v)}</text>`).join('')}
+    <path d="${pathA}" fill="none" stroke="${colorA}" stroke-width="3"/>
+    <path d="${pathB}" fill="none" stroke="${colorB}" stroke-width="2.5" stroke-dasharray="5,4"/>
+    ${valuesA.map((v,i)=>`<circle class="chart-pt chart-pop" data-tip="${labels[i]} — ${labelA}: <b>${fmtA(v)}</b>" cx="${sx(i)}" cy="${syA(v)}" r="5.5" fill="${colorA}"/>`).join('')}
+    ${valuesB.map((v,i)=>`<circle class="chart-pt chart-pop" data-tip="${labels[i]} — ${labelB}: <b>${fmtB(v)}</b>" cx="${sx(i)}" cy="${syB(v)}" r="5" fill="${colorB}"/>`).join('')}
+    ${labels.map((l,i)=> i%ls===0 ? `<text x="${sx(i)}" y="${H+18}" fill="#5c6270" font-size="11.5" text-anchor="middle">${l}</text>` : '').join('')}
+  </svg>`;
+}
+
+function monthGroupedBarChart(labels, valuesA,colorA,labelA,valuesB,colorB,labelB){
+  const W=980,H=260,padL=48,padB=26,padT=14;
+  const maxV=Math.ceil(Math.max(...valuesA,...valuesB)*1.1/10000)*10000 || 1;
+  const step=(W-padL-10)/valuesA.length;
+  const bw=step*0.30;
+  const sy=v=>H-padB-(v/maxV)*(H-padB-padT);
+  const ticks=[0,0.25,0.5,0.75,1].map(f=>Math.round(maxV*f));
+  const ls = labelStep(labels.length);
+  return `<div style="display:flex;align-items:center;gap:14px;margin-bottom:8px;font-size:12px;color:var(--text-dim);justify-content:flex-end;">
+    <span><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${colorA};margin-right:5px;"></span>${labelA}</span>
+    <span><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${colorB};margin-right:5px;"></span>${labelB}</span>
+  </div>
+  <svg viewBox="0 0 ${W} ${H+26}" style="width:100%;height:340px;">
+    ${ticks.map(v=>`<line x1="${padL}" y1="${sy(v)}" x2="${W-4}" y2="${sy(v)}" stroke="#1a1d23" stroke-width="1"/>
+    <text x="4" y="${sy(v)+4}" fill="#5c6270" font-size="12">${Math.round(v/1000)}k</text>`).join('')}
+    ${valuesA.map((v,i)=>{
+      const x=padL+i*step+step*0.14; const y=sy(v);
+      return `<rect class="chart-hit chart-pop" data-tip="${labels[i]} — ${labelA}: <b>${fmtNum(v)}</b>" x="${x}" y="${y}" width="${bw}" height="${H-padB-y}" rx="3" fill="${colorA}"/>`;
+    }).join('')}
+    ${valuesB.map((v,i)=>{
+      const x=padL+i*step+step*0.14+bw+3; const y=sy(v);
+      return `<rect class="chart-hit chart-pop" data-tip="${labels[i]} — ${labelB}: <b>${fmtNum(v)}</b>" x="${x}" y="${y}" width="${bw}" height="${H-padB-y}" rx="3" fill="${colorB}"/>`;
+    }).join('')}
+    ${labels.map((l,i)=> i%ls===0 ? `<text x="${padL+i*step+step/2}" y="${H+18}" fill="#5c6270" font-size="11.5" text-anchor="middle">${l}</text>` : '').join('')}
+  </svg>`;
+}
+
+function donutGeneric(segments, centerLabel, centerSub){
+  const r=42,cx=55,cy=55,circ=2*Math.PI*r;
+  let offset=0;
+  const arcs=segments.map(d=>{
+    const len=circ*(d.v/100);
+    const el=`<circle class="chart-hit" data-tip="${d.l}: <b>${d.v}%</b>" cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${d.c}" stroke-width="14" stroke-dasharray="${len} ${circ-len}" stroke-dashoffset="${-offset}" transform="rotate(-90 ${cx} ${cy})"/>`;
+    offset+=len;
+    return el;
+  }).join('');
+  return `<div class="donut-wrap">
+    <svg width="110" height="110" viewBox="0 0 110 110">
+      ${arcs}
+      <text x="55" y="52" text-anchor="middle" fill="#eef0f3" font-size="16" font-weight="800">${centerLabel}</text>
+      <text x="55" y="66" text-anchor="middle" fill="#5c6270" font-size="8">${centerSub}</text>
+    </svg>
+    <div style="flex:1;">
+      ${segments.map(d=>`<div class="legend-item chart-hit" data-tip="${d.l}: <b>${d.v}%</b>"><span class="legend-dot" style="background:${d.c}"></span><span class="lab">${d.l}</span><span class="amt">${d.v}%</span></div>`).join('')}
+    </div>
+  </div>`;
+}
+
+function renderClientOverview(){
+  const {data, labels} = getRangeData();
+  const tot = computeTotals(data);
+  const last = data[data.length-1];
+  const periodLabel = labels.length>1 ? (labels[0]+' à '+labels[labels.length-1]) : labels[0];
+  return `
+  ${renderWhatsAppPanel()}
+  <div class="kpi-grid">
+    <div class="card"><div class="kpi-label">CA total</div><div class="kpi-value">${fmtEUR(tot.ca)}</div></div>
+    <div class="card"><div class="kpi-label">Leads total</div><div class="kpi-value">${fmtNum(tot.leads)}</div></div>
+    <div class="card"><div class="kpi-label">CPL moyen</div><div class="kpi-value">${tot.cpl} €</div></div>
+    <div class="card"><div class="kpi-label">ROAS cumulé</div><div class="kpi-value">${tot.roas}x</div></div>
+  </div>
+  <div class="kpi-grid" style="margin-top:14px;">
+    <div class="card"><div class="kpi-label">Coût par appel qualifié</div><div class="kpi-value">${tot.costQualifiedCall} €</div><div class="kpi-sub">${tot.qualifiedCalls} appels qualifiés</div></div>
+    <div class="card"><div class="kpi-label">ROI publicitaire</div><div class="kpi-value">${tot.roi}%</div><div class="kpi-sub">(CA attribué − Ads) ÷ Ads</div></div>
+    <div class="card"><div class="kpi-label">Véhicules vendus</div><div class="kpi-value">${tot.deals}</div></div>
+    <div class="card"><div class="kpi-label">Coût par vente</div><div class="kpi-value">${tot.costDeal} €</div></div>
+  </div>
+  <div class="kpi-grid" style="margin-top:14px;grid-template-columns:repeat(2,1fr);">
+    <div class="card"><div class="kpi-label">Pipeline en cours</div><div class="kpi-value">${last.pipeline}<span class="kpi-unit">devis</span></div></div>
+    <div class="card"><div class="kpi-label">Tâches IA total</div><div class="kpi-value">${fmtNum(tot.ia)}</div></div>
+  </div>
+
+  <div class="card" style="margin-top:14px;">
+    <div class="panel-title">Évolution du chiffre d'affaires</div>
+    <div class="panel-sub">CA mensuel généré vs budget investi en Ads — ${periodLabel}</div>
+    ${monthGroupedBarChart(labels, data.map(d=>d.ca),'#5B82D4','CA mensuel', data.map(d=>d.ads),'#e2694a','Budget Ads')}
+  </div>
+
+  <div class="card" style="margin-top:14px;">
+    <div class="panel-title">Leads par mois</div>
+    <div class="panel-sub">Volume de leads générés</div>
+    ${monthBarChart(data.map(d=>d.leads), labels, '#4fb87a')}
+  </div>
+  <div class="card" style="margin-top:14px;">
+    <div class="panel-title">ROAS & CPL</div>
+    <div class="panel-sub">Retour sur ad spend vs coût par lead</div>
+    ${monthDualLineChart(labels, data.map(d=>d.roas),'#4bb6c9','ROAS', data.map(d=>d.cpl),'#e2984a','CPL',{fmtA:v=>v.toFixed(2)+'x',fmtB:v=>Math.round(v)+' €'})}
+  </div>
+
+  <div class="card" style="margin-top:14px;">
+    <div class="panel-title">Détail mensuel</div>
+    <div style="overflow-x:auto;">
+    <table class="contracts-table" style="min-width:920px;">
+      <thead><tr>
+        <th>Mois</th><th>Phase</th><th>CA</th><th>Ads</th><th>ROAS</th><th>ROI</th><th>Leads</th><th>CPL</th><th>Appels qualifiés</th><th>Coût/appel qualifié</th><th>Ventes</th><th>Coût/vente</th><th>Panier</th><th>Conv</th><th>Pipeline</th><th>Google</th><th>Fidélisés</th><th>IA tâches</th>
+      </tr></thead>
+      <tbody>
+        ${data.map((d,i)=>`
+          <tr>
+            <td style="font-weight:700;">${labels[i]}</td>
+            <td><span class="freq-tag" style="text-transform:capitalize;">${d.phase}</span></td>
+            <td>${fmtEUR(d.ca)}</td>
+            <td>${fmtEUR(d.ads)}</td>
+            <td style="color:#7be3a3;font-weight:700;">${d.roas.toFixed(2)}x</td>
+            <td>${d.roi.toFixed(1)}%</td>
+            <td>${d.leads}</td>
+            <td>${d.cpl} €</td>
+            <td>${d.qualifiedCalls}</td>
+            <td>${fmtEUR(d.costQualifiedCall)}</td>
+            <td>${d.deals}</td>
+            <td>${fmtEUR(d.costDeal)}</td>
+            <td>${fmtEUR(d.panier)}</td>
+            <td>${d.conv.toFixed(1)}%</td>
+            <td>${d.pipeline}</td>
+            <td>${d.google.toFixed(1)}★</td>
+            <td>${d.maint}</td>
+            <td>${d.ia}</td>
+          </tr>`).join('')}
+      </tbody>
+    </table>
+    </div>
+  </div>
+  `;
+}
+
+function renderVentesPage(){
+  const {data, labels} = getRangeData();
+  const tot = computeTotals(data);
+  const last = data[data.length-1];
+  const periodLabel = labels.length>1 ? (labels[0]+' à '+labels[labels.length-1]) : labels[0];
+  return `
+  <div class="kpi-grid" style="grid-template-columns:repeat(6,1fr);">
+    <div class="card"><div class="kpi-label">CA total</div><div class="kpi-value" style="font-size:21px;">${fmtEUR(tot.ca)}</div></div>
+    <div class="card"><div class="kpi-label">Véhicules vendus</div><div class="kpi-value" style="font-size:21px;">${tot.deals}</div></div>
+    <div class="card"><div class="kpi-label">Panier moyen</div><div class="kpi-value" style="font-size:21px;">${fmtEUR(last.panier)}</div></div>
+    <div class="card"><div class="kpi-label">Coût par vente</div><div class="kpi-value" style="font-size:21px;">${tot.costDeal} €</div></div>
+    <div class="card"><div class="kpi-label">Taux de conversion</div><div class="kpi-value" style="font-size:21px;">${tot.conv}%</div></div>
+    <div class="card"><div class="kpi-label">Pipeline en cours</div><div class="kpi-value" style="font-size:21px;">${last.pipeline}<span class="kpi-unit">devis</span></div></div>
+  </div>
+
+  <div class="card" style="margin-top:14px;">
+    <div class="panel-title">Ventes conclues par mois</div>
+    <div class="panel-sub">${periodLabel}</div>
+    ${monthBarChart(data.map(d=>d.deals), labels, '#4fb87a')}
+  </div>
+  <div class="card" style="margin-top:14px;">
+    <div class="panel-title">Panier moyen & Taux de conversion</div>
+    <div class="panel-sub">Évolution mensuelle</div>
+    ${monthDualLineChart(labels, data.map(d=>d.panier),'#5B82D4','Panier moyen', data.map(d=>d.conv),'#e2984a','Conv. %')}
+  </div>
+  `;
+}
+
+function renderAcquisitionPage(){
+  const {data, labels} = getRangeData();
+  const tot = computeTotals(data);
+  const last = data[data.length-1];
+  const periodLabel = labels.length>1 ? (labels[0]+' à '+labels[labels.length-1]) : labels[0];
+  return `
+  <div class="kpi-grid" style="grid-template-columns:repeat(4,1fr);">
+    <div class="card"><div class="kpi-label">Leads totaux (période)</div><div class="kpi-value">${fmtNum(tot.leads)}</div></div>
+    <div class="card"><div class="kpi-label">Leads dernier mois</div><div class="kpi-value">${fmtNum(last.leads)}</div></div>
+    <div class="card"><div class="kpi-label">CPL actuel</div><div class="kpi-value">${last.cpl} €</div></div>
+    <div class="card"><div class="kpi-label">Budget Ads total</div><div class="kpi-value" style="font-size:20px;">${fmtEUR(tot.ads)}</div></div>
+  </div>
+  <div class="kpi-grid" style="margin-top:14px;grid-template-columns:repeat(4,1fr);">
+    <div class="card"><div class="kpi-label">ROAS actuel</div><div class="kpi-value">${last.roas.toFixed(2)}x</div></div>
+    <div class="card"><div class="kpi-label">ROI publicitaire</div><div class="kpi-value">${tot.roi}%</div><div class="kpi-sub">CA attribué après coût Ads</div></div>
+    <div class="card"><div class="kpi-label">Coût par appel qualifié</div><div class="kpi-value">${tot.costQualifiedCall} €</div><div class="kpi-sub">${tot.qualifiedCalls} appels qualifiés</div></div>
+    <div class="card"><div class="kpi-label">Taux de prise de RDV</div><div class="kpi-value">${tot.appointmentRate}%</div><div class="kpi-sub">${tot.appointments} rendez-vous</div></div>
+  </div>
+  <div class="kpi-grid" style="margin-top:14px;grid-template-columns:repeat(2,1fr);">
+    <div class="card"><div class="kpi-label">Taux de présence</div><div class="kpi-value">${tot.showRate}%</div><div class="kpi-sub">${tot.attendedAppointments} rendez-vous tenus</div></div>
+    <div class="card"><div class="kpi-label">No-show rate</div><div class="kpi-value">${tot.noShowRate}%</div><div class="kpi-sub">Calculé sur les rendez-vous pris</div></div>
+  </div>
+
+  <div class="card" style="margin-top:14px;">
+    <div class="panel-title">Sources de leads</div>
+    <div class="panel-sub">Répartition par canal</div>
+    <div style="min-height:150px;display:flex;align-items:center;justify-content:center;color:var(--text-faint);">Aucune répartition par source vérifiée</div>
+  </div>
+  <div class="card" style="margin-top:14px;">
+    <div class="panel-title">Évolution CPL</div>
+    <div class="panel-sub">Coût par lead — ${periodLabel}</div>
+    ${monthLineChart(data.map(d=>d.cpl), labels, '#e2984a',{fmt:v=>Math.round(v)+'€'})}
+  </div>
+
+  <div class="card" style="margin-top:14px;">
+    <div class="panel-title">Budget Ads vs CA généré</div>
+    <div class="panel-sub">Retour sur investissement mensuel</div>
+    ${monthGroupedBarChart(labels, data.map(d=>d.ads),'#5B82D4','Budget Ads', data.map(d=>d.ca),'#4fb87a','CA généré')}
+  </div>
+  `;
+}
+
+function renderActivitePage(){
+  const {data, labels} = getRangeData();
+  const tot = computeTotals(data);
+  const last = data[data.length-1];
+  const periodLabel = labels.length>1 ? (labels[0]+' à '+labels[labels.length-1]) : labels[0];
+  const totalAutos = proofEntries.length;
+  return `
+  ${renderWhatsAppPanel()}
+  <div class="kpi-grid">
+    <div class="card"><div class="kpi-label">Actions IA vérifiées</div><div class="kpi-value">${totalAutos}</div><div class="kpi-sub">Journal Supabase uniquement</div></div>
+    <div class="card"><div class="kpi-label">Tâches IA (période)</div><div class="kpi-value">${fmtNum(tot.ia)}</div></div>
+    <div class="card"><div class="kpi-label">Tâches dernier mois</div><div class="kpi-value">${fmtNum(last.ia)}</div></div>
+    <div class="card"><div class="kpi-label">Sources connectées vérifiées</div><div class="kpi-value">${cerveauSources.length}</div><div class="kpi-sub">Contrôlées dans Supabase</div></div>
+  </div>
+
+  <div class="card" style="margin-top:14px;">
+    <div class="panel-title">Tâches IA traitées par mois</div>
+    <div class="panel-sub">Volume cumulé d'automations exécutées — ${periodLabel}</div>
+    ${monthBarChart(data.map(d=>d.ia), labels, '#a374e0',{fmt:v=>fmtNum(v)})}
+  </div>
+
+  <div class="card" style="margin-top:14px;">
+    <div class="panel-title">Répartition par pilier</div>
+    <div class="panel-sub">Nombre d'automations actives par pilier</div>
+    <div class="vault-grid">
+      ${pillars.map(p=>`
+        <div class="vault-card" style="--accent:${p.accent}">
+          <div class="vault-title" style="color:${p.accent}">${p.icon} ${p.tag}</div>
+          <p>${p.desc}</p>
+          <div class="vault-freq">${proofEntries.filter(e=>e.pillar===p.id).length} actions vérifiées</div>
+        </div>
+      `).join('')}
+    </div>
+  </div>
+  `;
+}
+
+let proofEntries=[];
+const pillarAccentMap=Object.fromEntries(pillars.map(p=>[p.id,p.accent]));
+const pillarIconMap=Object.fromEntries(pillars.map(p=>[p.id,p.icon]));
+const pillarTagMap=Object.fromEntries(pillars.map(p=>[p.id,p.tag]));
+
+function renderPreuvesPage(){
+  const activePillars=new Set(proofEntries.map(e=>e.pillar)).size;
+  const lastAction=proofEntries.length ? proofEntries[0].time : 'Aucune';
+  return `
+  <div class="kpi-grid" style="grid-template-columns:repeat(3,1fr);">
+    <div class="card"><div class="kpi-label">Piliers avec actions vérifiées</div><div class="kpi-value">${activePillars}<span class="kpi-unit">/5</span></div></div>
+    <div class="card"><div class="kpi-label">Dernière action vérifiée</div><div class="kpi-value" style="font-size:16px;">${lastAction}</div></div>
+    <div class="card"><div class="kpi-label">Client accompagné</div><div class="kpi-value" style="font-size:18px;">RAV Distribution</div></div>
+  </div>
+
+  <div class="card" style="margin-top:14px;">
+    <div class="panel-title">Journal des automations</div>
+    <div class="panel-sub">Chaque ligne est une action réelle exécutée par l'IA sur RAV Distribution Automobiles.</div>
+    <div class="proof-feed">
+      ${proofEntries.length ? proofEntries.map(e=>`
+        <div class="proof-item">
+          <div class="proof-dot" style="background:${pillarAccentMap[e.pillar]}"></div>
+          <div class="proof-body">
+            <div class="proof-top">
+              <span class="proof-tag" style="color:${pillarAccentMap[e.pillar]};border-color:${pillarAccentMap[e.pillar]}44;">${pillarIconMap[e.pillar]} ${pillarTagMap[e.pillar]}</span>
+              <span class="proof-time">${e.time}</span>
+            </div>
+            <div class="proof-title">${e.title}</div>
+            <div class="proof-detail">${e.detail}</div>
+            <div class="proof-src">Source : ${e.src}</div>
+          </div>
+        </div>
+      `).join('') : '<div style="padding:36px;text-align:center;color:var(--text-faint);">Aucune action vérifiée enregistrée dans Supabase.</div>'}
+    </div>
+  </div>
+  `;
+}
+
+let cerveauSources=[];
+const cerveauOutputs=[
+  {t:'Playbooks agence', c:'var(--orange)', d:'Structures d\'offre, grilles de prix setup / mensuel / % croissance, contrats types et scripts de cadrage.', freq:'Ce que ASP applique sur sa propre acquisition'},
+  {t:'Bibliothèque d\'objections', c:'var(--green)', d:'Objections réelles issues des appels, avec les réponses qui ont converti et celles qui ont tué le deal.', freq:'Alimentée par chaque transcript déposé, au fur et à mesure'},
+  {t:'Créas et scripts', c:'var(--purple)', d:'Créas vidéo Meta Ads, VSL pré-RDV et post-réservation, script d\'appel de qualification — déjà produits pour RAV Distribution.', freq:'Réutilisés et affinés au fil des campagnes'},
+  {t:'Suivi des dossiers d\'import', c:'var(--blue)', d:'Historique des démarches administratives (douane, conformité, immatriculation) par véhicule.', freq:'Mis à jour à chaque dossier traité'}
+];
+
+let cerveauConversation=[
+  {role:'ai', text:'Bonjour. Je peux analyser les données vérifiées de votre dashboard et les connaissances enregistrées dans votre vault.'}
+];
+let cerveauLoading=false;
+
+function escapeHtml(value){
+  return String(value??'').replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
+}
+
+function withDashboardTimeout(promise,ms){
+  let timer;
+  return Promise.race([promise,new Promise((_,reject)=>{timer=setTimeout(()=>reject(new Error('Délai de réponse dépassé')),ms);})]).finally(()=>clearTimeout(timer));
+}
+async function askCerveau(){
+  const input = document.getElementById('askInput');
+  const question = input.value.trim();
+  if(!question || cerveauLoading) return;
+  cerveauConversation.push({role:'user', text:question});
+  cerveauLoading=true;
+  render();
+  try{
+    const history=cerveauConversation.slice(0,-1).slice(-10).map(m=>({role:m.role==='ai'?'assistant':'user',content:m.text}));
+    const {data,error}=await withDashboardTimeout(supabaseClient.functions.invoke('second-brain',{
+      body:{
+        client:activeClientName,
+        question,
+        period_start:selectedStartDate.toISOString().slice(0,10),
+        period_end:selectedEndDate.toISOString().slice(0,10),
+        history
+      }
+    }),30000);
+    if(error) throw error;
+    if(!data || !data.answer) throw new Error('Réponse Claude vide');
+    cerveauConversation.push({role:'ai',text:data.answer});
+  }catch(error){
+    console.error('Erreur second cerveau :',error);
+    cerveauConversation.push({role:'ai',text:'Le second cerveau est momentanément indisponible. Vérifiez que la fonction Supabase « second-brain » est déployée et que la clé Claude est configurée.'});
+  }finally{
+    cerveauLoading=false;
+    render();
+    const conv = document.getElementById('askConversation');
+    if(conv) conv.scrollTop = conv.scrollHeight;
+    const inp = document.getElementById('askInput');
+    if(inp) inp.focus();
+  }
+}
+
+function renderCerveau(){
+
+
+  return `
+  <div class="banner">
+    <div class="banner-icon">🧠</div>
+    <div class="banner-text">Deux flux alimentent le vault. Les données de RAV Distribution Automobiles (ses outils, ses campagnes, ses leads) et, par-dessus, ce que <b>Acquisition Scale Partner</b> y déverse : nos playbooks internes déjà construits (agent WhatsApp, créas, scripts).</div>
+    <div class="banner-cta">En cours<div class="small">de démarrage</div></div>
+  </div>
+
+  <div class="card ask-card">
+    <div class="panel-title">Poser une question</div>
+    <div class="panel-sub">Le client tape sa question, l'IA répond à partir du vault — infrastructure déjà en place, chiffres de performance à venir.</div>
+    <div class="ask-conversation" id="askConversation">
+      ${cerveauConversation.map(m=>`
+        <div class="ask-bubble ${m.role}">
+          ${m.role==='ai' ? '<div class="ask-avatar">🧠</div>' : ''}
+          <div class="ask-text">${escapeHtml(m.text).replace(/\n/g,'<br>')}</div>
+        </div>
+      `).join('')}
+    </div>
+    <div class="ask-input-row">
+      <input type="text" id="askInput" class="ask-input" placeholder="Ex : Quel est notre coût par appel qualifié ce mois-ci ?" onkeydown="if(event.key==='Enter'){askCerveau();}" ${cerveauLoading?'disabled':''}>
+      <button class="ask-btn" onclick="askCerveau()" ${cerveauLoading?'disabled':''}>${cerveauLoading?'Analyse…':'Envoyer'}</button>
+    </div>
+  </div>
+
+  <div class="kpi-grid" style="margin-top:14px;">
+    <div class="card"><div class="kpi-label">Sources connectées vérifiées</div><div class="kpi-value">${cerveauSources.length}</div><div class="kpi-sub">Enregistrements Supabase</div></div>
+    <div class="card"><div class="kpi-label">Bases Acquisition Scale Partner</div><div class="kpi-value">${cerveauOutputs.length}</div><div class="kpi-sub">Playbooks déjà construits</div></div>
+    <div class="card"><div class="kpi-label">Actions IA vérifiées</div><div class="kpi-value">${proofEntries.length}</div><div class="kpi-sub">Journal réel</div></div>
+    <div class="card"><div class="kpi-label">Client accompagné</div><div class="kpi-value" style="font-size:18px;">RAV Distribution</div><div class="kpi-sub">Automobiles</div></div>
+  </div>
+
+  <div class="card" style="margin-top:14px;">
+    <div class="panel-title">Sources de l'agence</div>
+    <div class="panel-sub">Chaque source alimente le vault en continu — c'est de là que l'IA tire une réponse précise dès qu'un client demande une info spécifique.</div>
+    <div class="source-grid">
+      ${cerveauSources.length ? cerveauSources.map(s=>`
+        <div class="source-item">
+          <div class="source-ic">${s.i}</div>
+          <div class="source-name">${s.n}</div>
+          <span class="status" style="margin-left:auto;"><span class="d"></span></span>
+        </div>
+      `).join('') : '<div style="grid-column:1/-1;padding:28px;text-align:center;color:var(--text-faint);">Aucune source connectée vérifiée.</div>'}
+    </div>
+  </div>
+
+  <div class="card" style="margin-top:14px;">
+    <div class="panel-title">Ce que Acquisition Scale Partner déverse dans le vault</div>
+    <div class="panel-sub">De quoi répondre à une question client précise instantanément, sans repartir de zéro à chaque fois.</div>
+    <div class="vault-grid">
+      ${cerveauOutputs.map(o=>`
+        <div class="vault-card" style="--accent:${o.c}">
+          <div class="vault-title" style="color:${o.c}">${o.t}</div>
+          <p>${o.d}</p>
+          <div class="vault-freq">${o.freq}</div>
+        </div>
+      `).join('')}
+    </div>
+  </div>
+  `;
+}
+
+function renderArchitecture(){
+  const active = pillars.find(p=>p.id===openPillar) || pillars[0];
+  return `
+  <div class="pillar-strip">
+    ${pillars.map(p=>`
+      <div class="pillar-tile ${p.id===openPillar?'active':''}" style="--accent:${p.accent}" data-pillar="${p.id}">
+        <div class="ptag">${p.icon} ${p.tag}</div>
+        <div class="pdesc">${p.desc}</div>
+        <div class="ptags"><span>${p.label}</span><span>${p.label2}</span></div>
+        <div class="pcount">${p.automations.length} automations prévues</div>
+      </div>
+    `).join('')}
+  </div>
+  ${renderDetailBlock(active)}
+  `;
+}
+
+function renderDetailBlock(p){
+  return `
+  <div class="detail-block" style="--accent:${p.accent}">
+    <div class="detail-head">
+      <div>
+        <div class="detail-tag">${p.icon} ${p.tag}</div>
+        <div class="detail-headline">${p.headline}</div>
+      </div>
+      <div class="detail-count">
+        <div class="n">${p.automations.length}</div>
+        <div class="l">automations prévues</div>
+      </div>
+    </div>
+
+    <div class="detail-grid">
+      <div>
+        <div class="problems-title">Problèmes identifiés</div>
+        ${p.problems.map(pr=>`
+          <div class="problem-item">
+            <div class="pd" style="background:${p.accent}"></div>
+            <div><b>${pr.t}</b><p>${pr.d}</p></div>
+          </div>
+        `).join('')}
+      </div>
+      <div class="why-box">
+        <div class="why-title" style="color:${p.accent}">Pourquoi on a construit ça comme ça</div>
+        <p>${p.why}</p>
+      </div>
+    </div>
+
+    <div class="impact-grid">
+      ${p.impact.map(m=>`
+        <div class="impact-card">
+          <div class="impact-lab">${m.l}</div>
+          <div class="impact-val">${m.a}<span class="arrow">→</span><span class="after" style="color:${p.accent}">${m.b}</span></div>
+        </div>
+      `).join('')}
+    </div>
+
+    <div class="auto-label" style="color:${p.accent}">${p.icon} Les ${p.automations.length} automations du pilier ${p.tag.charAt(0)+p.tag.slice(1).toLowerCase()}<span class="hint">Clique sur une automation pour voir ses avantages client</span></div>
+
+    <div class="auto-grid" id="autoGrid">
+      ${p.automations.map((a,i)=>renderAutoCard(p,a,i)).join('')}
+      ${openAuto[p.id]!==undefined ? renderAutoDetail(p, p.automations[openAuto[p.id]]) : ''}
+    </div>
+  </div>
+  `;
+}
+
+function renderAutoCard(p,a,i){
+  const isOpen = openAuto[p.id]===i;
+  return `
+  <div class="auto-card ${isOpen?'open':''}" data-pillar="${p.id}" data-idx="${i}" style="--accent:${p.accent}">
+    <h4>${a.n}</h4>
+    <p>${a.d}</p>
+    <div class="auto-result" style="color:${p.accent}">${a.res}</div>
+    <div class="auto-foot">
+      <span class="freq-tag">${a.freq}</span>
+      <span class="status"><span class="d"></span>${a.verified?'Vérifié':'À connecter'}</span>
+    </div>
+    <div class="auto-toggle">${isOpen?'▲ Masquer':'Voir les avantages ▼'}</div>
+  </div>`;
+}
+
+function renderAutoDetail(p,a){
+  return `
+  <div class="auto-detail" style="--accent:${p.accent}">
+    <div class="auto-detail-top">
+      <div>
+        <div class="detail-tag" style="color:${p.accent}">${p.tag}</div>
+        <h3>${a.n}</h3>
+        <div class="meta">${a.d} · <b style="color:${p.accent}">${a.freq}</b></div>
+      </div>
+      <div class="auto-detail-result">
+        <div class="l">Résultat</div>
+        <div class="v" style="color:${p.accent}">${a.res}</div>
+      </div>
+    </div>
+    <div class="concrete-title">Ce que cette automation change concrètement pour le client</div>
+    <div class="concrete-grid">
+      ${a.bullets.map(b=>`<div class="concrete-item"><div class="d" style="background:${p.accent}"></div><div>${b}</div></div>`).join('')}
+    </div>
+  </div>`;
+}
+
+function attachArchitectureEvents(){
+  document.querySelectorAll('.pillar-tile').forEach(t=>{
+    t.addEventListener('click',()=>{
+      openPillar=t.dataset.pillar;
+      render();
+      attachArchitectureEvents();
+    });
+  });
+  document.querySelectorAll('.auto-card').forEach(c=>{
+    c.addEventListener('click',()=>{
+      const pid=c.dataset.pillar, idx=parseInt(c.dataset.idx);
+      openAuto[pid] = (openAuto[pid]===idx) ? undefined : idx;
+      render();
+      attachArchitectureEvents();
+    });
+  });
+}
+
+initializeDashboard();
+</script>
+</div>
+</body>
+</html>

@@ -296,6 +296,7 @@
     gap:14px;
     margin-bottom:16px;
   }
+  .kpi-grid.kpi-grid-3{grid-template-columns:repeat(3,1fr);}
   .card{
     background:var(--panel);
     border:1px solid var(--border-soft);
@@ -2476,6 +2477,16 @@ function renderClientOverview(){
   </div>
 
   <div class="card" style="margin-top:14px;">
+    <div class="panel-title">Chiffre d’affaires</div>
+    <div class="panel-sub">Ventes signées sur la période, et ce qu’elles rapportent par rapport au budget publicitaire</div>
+    <div class="kpi-grid kpi-grid-3" style="margin-top:12px;margin-bottom:0;">
+      ${big('Chiffre d’affaires généré', fmtEUR(tot.ca||0), tot.deals?(fmtNum(tot.deals)+' vente'+(tot.deals>1?'s':'')+' signée'+(tot.deals>1?'s':'')):'Dès qu’une vente est signée, son montant apparaît ici', tot.ca?'#4fb87a':null)}
+      ${big('Panier moyen', tot.deals?fmtEUR(tot.ca/tot.deals):'—', 'Chiffre d’affaires ÷ ventes signées')}
+      ${big('Rapport sur la publicité', (tot.ads&&tot.ca)?(tot.ca/tot.ads).toLocaleString('fr-FR',{maximumFractionDigits:1})+'<span class="kpi-unit">×</span>':'—', (tot.ads&&tot.ca)?('Pour 1 € investi, '+fmtEUR2(tot.ca/tot.ads)+' de chiffre d’affaires'):'Chiffre d’affaires ÷ budget publicitaire')}
+    </div>
+  </div>
+
+  <div class="card" style="margin-top:14px;">
     <div class="panel-title">Publicité et demandes reçues, mois par mois</div>
     <div class="panel-sub">En bleu : le budget investi · en vert : les demandes reçues</div>
     ${monthGroupedBarChart(labels, data.map(d=>d.ads),'#5B82D4','Investi en publicité (€)', data.map(d=>d.leads),'#4fb87a','Demandes reçues')}
@@ -2484,8 +2495,8 @@ function renderClientOverview(){
   <div class="card" style="margin-top:14px;">
     <div class="panel-title">Le mois en détail</div>
     <div style="overflow-x:auto;">
-    <table class="contracts-table" style="min-width:560px;">
-      <thead><tr><th>Mois</th><th>Investi en pub</th><th>Demandes reçues</th><th>Coût d’une demande</th><th>Rendez-vous</th><th>Coût d’un rendez-vous</th><th>${escapeHtml(saleLabel())}</th></tr></thead>
+    <table class="contracts-table" style="min-width:640px;">
+      <thead><tr><th>Mois</th><th>Investi en pub</th><th>Demandes reçues</th><th>Coût d’une demande</th><th>Rendez-vous</th><th>Coût d’un rendez-vous</th><th>${escapeHtml(saleLabel())}</th><th>Chiffre d’affaires</th></tr></thead>
       <tbody>
         ${data.map((d,i)=>`
           <tr>
@@ -2496,6 +2507,7 @@ function renderClientOverview(){
             <td>${d.appointments||0}</td>
             <td>${d.appointments?fmtEUR2(d.ads/d.appointments):'—'}</td>
             <td>${d.deals}</td>
+            <td>${fmtEUR(d.ca||0)}</td>
           </tr>`).slice().reverse().join('')}
       </tbody>
     </table>

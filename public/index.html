@@ -2466,9 +2466,10 @@ function renderClientOverview(){
     ${big('Investi en publicité', fmtEUR2(tot.ads), 'Facebook et Instagram')}
     ${big('Demandes reçues', fmtNum(tot.leads), 'Personnes intéressées par votre offre')}
     ${big('Coût d’une demande', tot.leads?fmtEUR2(tot.ads/tot.leads):'—', 'Budget pub ÷ demandes reçues')}
-    ${big('Rendez-vous obtenus', fmtNum(tot.appointments), tot.appointments?('Soit '+fmtEUR2(tot.ads/tot.appointments)+' par rendez-vous'):'Réservés dans votre agenda')}
+    ${big('Rendez-vous obtenus', fmtNum(tot.appointments), 'Réservés dans votre agenda')}
   </div>
-  <div class="kpi-grid" style="margin-top:14px;grid-template-columns:repeat(3,1fr);">
+  <div class="kpi-grid" style="margin-top:14px;">
+    ${big('Coût d’un rendez-vous', tot.appointments?fmtEUR2(tot.ads/tot.appointments):'—', 'Budget pub ÷ rendez-vous obtenus')}
     ${big(escapeHtml(saleLabel()), fmtNum(tot.deals), tot.ca?('Chiffre d’affaires : '+fmtEUR(tot.ca)):'Dès qu’une vente est signée, elle apparaît ici')}
     ${big('Projets en cours', fmtNum(last.pipeline||0), 'Clients en discussion avec vous')}
     ${big('Temps gagné par l’assistant', hours!==null?hours+'<span class="kpi-unit">h</span>':'—', wa?(fmtNum(wa.contacts||0)+' personnes accompagnées sur WhatsApp ce mois-ci'):'Assistant WhatsApp')}
@@ -2484,7 +2485,7 @@ function renderClientOverview(){
     <div class="panel-title">Le mois en détail</div>
     <div style="overflow-x:auto;">
     <table class="contracts-table" style="min-width:560px;">
-      <thead><tr><th>Mois</th><th>Investi en pub</th><th>Demandes reçues</th><th>Coût d’une demande</th><th>Rendez-vous</th><th>${escapeHtml(saleLabel())}</th></tr></thead>
+      <thead><tr><th>Mois</th><th>Investi en pub</th><th>Demandes reçues</th><th>Coût d’une demande</th><th>Rendez-vous</th><th>Coût d’un rendez-vous</th><th>${escapeHtml(saleLabel())}</th></tr></thead>
       <tbody>
         ${data.map((d,i)=>`
           <tr>
@@ -2493,6 +2494,7 @@ function renderClientOverview(){
             <td>${d.leads}</td>
             <td>${d.leads?fmtEUR2(d.ads/d.leads):'—'}</td>
             <td>${d.appointments||0}</td>
+            <td>${d.appointments?fmtEUR2(d.ads/d.appointments):'—'}</td>
             <td>${d.deals}</td>
           </tr>`).slice().reverse().join('')}
       </tbody>

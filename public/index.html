@@ -2472,7 +2472,7 @@ function renderClientOverview(){
   <div class="kpi-grid" style="margin-top:14px;">
     ${big('Coût d’un rendez-vous', tot.appointments?fmtEUR2(tot.ads/tot.appointments):'—', 'Budget pub ÷ rendez-vous obtenus')}
     ${big(escapeHtml(saleLabel()), fmtNum(tot.deals), tot.ca?('Chiffre d’affaires : '+fmtEUR(tot.ca)):'Dès qu’une vente est signée, elle apparaît ici')}
-    ${big('Projets en cours', fmtNum(last.pipeline||0), 'Clients en discussion avec vous')}
+    ${big('Projets en cours', fmtNum(last.pipeline||0), 'Propositions commerciales envoyées, en attente de réponse')}
     ${big('Temps gagné par l’assistant', hours!==null?hours+'<span class="kpi-unit">h</span>':'—', wa?(fmtNum(wa.contacts||0)+' personnes accompagnées sur WhatsApp ce mois-ci'):'Assistant WhatsApp')}
   </div>
 

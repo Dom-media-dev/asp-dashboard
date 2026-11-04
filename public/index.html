@@ -744,6 +744,7 @@
   <div class="nav-section">
     <div class="nav-label">Tableau de bord</div>
     <div class="nav-item" data-page="overview"><span class="ic">📊</span> Vue d'ensemble</div>
+    <div class="nav-item" data-page="brasdroit"><span class="ic">🎯</span> Bras droit</div>
     <div class="nav-item" data-page="acquisition"><span class="ic">📥</span> Acquisition</div>
     <div class="nav-item" data-page="ventes"><span class="ic">📞</span> Ventes</div>
     <div class="nav-item" data-page="activite"><span class="ic">🧠</span> Activité IA</div>
@@ -1576,6 +1577,178 @@ function renderWhatsAppPanel(){
 }
 
 
+/* ============ BRAS DROIT : tunnel, coûts, RDV, alertes, relances ============ */
+let bdData=null, bdState='loading';
+async function loadBrasDroit(){
+  const client=activeClientName;
+  bdState='loading';
+  try{
+    const q=(t,sel,ord)=>{ let r=supabaseClient.from(t).select(sel||'*'); return withDashboardTimeout(r,15000); };
+    const [f,iss,det,day,mon,src,bl,al,ve]=await Promise.all([
+      q('dash_funnel'), q('dash_rdv_issues'), q('dash_rdv_detail','client,rdv_date,issue,etape'), q('dash_daily'), q('dash_months'),
+      q('dash_sources'), q('dash_blocages'), q('dash_alertes'), q('dash_vente')
+    ]);
+    if(client!==activeClientName || !userRole) return;
+    const err=[f,iss,det,day,mon,src,bl,al,ve].find(r=>r.error);
+    if(err) throw err.error;
+    bdData={funnel:(f.data||[])[0]||null, issues:iss.data||[], rdv:det.data||[], daily:day.data||[], months:mon.data||[],
+      sources:src.data||[], pertes:(bl.data||[]).filter(r=>r.type!=='Objection'), objections:(bl.data||[]).filter(r=>r.type==='Objection'),
+      alertes:al.data||[], vente:ve.data||[]};
+    bdState=bdData.funnel?'ready':'empty';
+  }catch(e){
+    if(client!==activeClientName || !userRole) return;
+    console.error('Erreur données bras droit :',e);
+    bdState='unavailable';
+  }
+  if(currentPage==='brasdroit') render();
+}
+function bdPct(a,b){ return b ? Math.round(a/b*1000)/10 : null; }
+function bdFmtPct(v){ return v===null||v===undefined ? '—' : v.toLocaleString('fr-FR',{maximumFractionDigits:1})+' %'; }
+function bdFmtDate(s){ if(!s) return '—'; const p=String(s).slice(0,10).split('-'); return p[2]+'/'+p[1]; }
+const BD_SEV={critique:{l:'Critique',c:'var(--red)'},important:{l:'Important',c:'var(--orange)'},a_verifier:{l:'À vérifier',c:'var(--text-faint)'},ok:{l:'OK',c:'var(--green)'}};
+function bdPill(sev){ const s=BD_SEV[sev]||{l:sev,c:'var(--text-faint)'}; return `<span style="display:inline-block;padding:1px 8px;border-radius:999px;border:1px solid ${s.c};color:${s.c};font-size:11px;white-space:nowrap">${escapeHtml(s.l)}</span>`; }
+function bdHBars(rows, colorOf, opts){
+  opts=opts||{};
+  if(!rows.length) return `<div class="panel-sub">Aucune donnée pour l’instant.</div>`;
+  const max=Math.max(1,...rows.map(r=>r.v));
+  return `<div style="display:flex;flex-direction:column;gap:9px">${rows.map((r,i)=>`
+    <div class="chart-hit" data-tip="${escapeHtml(r.l)} : <b>${fmtNum(r.v)}</b>${r.tip?' · '+r.tip:''}" style="display:grid;grid-template-columns:minmax(110px,190px) 1fr auto;align-items:center;gap:10px;font-size:12.5px">
+      <span style="color:var(--text-dim)">${escapeHtml(r.l)}</span>
+      <span style="background:#14161b;border-radius:4px;height:16px;overflow:hidden"><span class="progress-bar-fill" style="display:block;height:100%;width:${Math.max(1.5,r.v/max*100)}%;background:${colorOf(r,i)};border-radius:4px"></span></span>
+      <span style="font-variant-numeric:tabular-nums;white-space:nowrap"><b>${fmtNum(r.v)}</b>${r.extra?` <span style="color:${r.extraColor||'var(--text-faint)'}">${r.extra}</span>`:''}</span>
+    </div>`).join('')}</div>`;
+}
+function renderBrasDroitPage(){
+  if(bdState==='loading') return `<div class="card" style="padding:50px;text-align:center;color:var(--text-faint)">Chargement du bras droit…</div>`;
+  if(bdState!=='ready') return `<div class="card" style="padding:50px;text-align:center;color:var(--text-faint)">Données indisponibles pour le moment.</div>`;
+  const f=bdData.funnel;
+  const presence=bdPct(f.rdv_honores, f.rdv_honores+f.rdv_non_honores);
+  const lastMonth=bdData.months.filter(m=>m.pub>0||m.prospects>0).slice(-1)[0]||{};
+  const euro2=v=>v===null||v===undefined?'—':v.toLocaleString('fr-FR',{style:'currency',currency:'EUR'});
+  const moisNom=s=>{ if(!s) return '—'; const [y,m]=s.split('-'); return ['janv.','févr.','mars','avr.','mai','juin','juil.','août','sept.','oct.','nov.','déc.'][+m-1]+' '+y; };
+  const crit=bdData.alertes.filter(a=>a.urgence==='critique').length;
+  const relances=bdData.vente.filter(v=>v.urgence==='critique').length;
+
+  // Tunnel
+  const steps=[['Prospects',f.prospects],['Qualifiés',f.qualifies],['RDV pris',f.rdv],['RDV honorés',f.rdv_honores],['Projets en cours',f.projets_en_cours],['Devis envoyés',f.devis_envoyes],['Signés',f.signes]];
+  let worst=-1, worstRate=101;
+  steps.forEach((s,i)=>{ if(i && steps[i-1][1]>0){ const r=s[1]/steps[i-1][1]*100; if(r<worstRate){worstRate=r;worst=i;} } });
+  const tunnelRows=steps.map((s,i)=>({l:s[0],v:s[1],extra:i?bdFmtPct(bdPct(s[1],steps[i-1][1])):'',extraColor:i===worst?'var(--red)':'',tip:i?bdFmtPct(bdPct(s[1],steps[i-1][1]))+' de l’étape précédente':''}));
+
+  // RDV
+  const ORDER=['Honoré','Non honoré ou non suivi','Annulé','Manqué par RAV','Perdu','À venir','Date inconnue'];
+  const issues=bdData.issues.slice().sort((a,b)=>ORDER.indexOf(a.issue)-ORDER.indexOf(b.issue));
+  const totIss=issues.reduce((s,r)=>s+r.nb,0);
+  const issueColor=k=>k==='Honoré'?'var(--green)':(['À venir','Date inconnue'].includes(k)?'#3a3f4a':'var(--red)');
+
+  // Courbes
+  const daily=bdData.daily;
+  const dailyChart=setterLineChart([
+    {name:'Prospects',color:'var(--blue)',values:daily.map(d=>d.prospects)},
+    {name:'RDV pris',color:'var(--orange)',values:daily.map(d=>d.rdv_pris)},
+    {name:'Propositions',color:'var(--green)',values:daily.map(d=>d.propositions)},
+    {name:'Pro formas',color:'#c77dff',values:daily.map(d=>d.devis)}
+  ], daily.map(d=>bdFmtDate(d.jour)));
+  const months=bdData.months;
+  const monthLabels=months.map(m=>moisNom(m.mois));
+  const monthsChart=months.length>1 ? monthDualLineChart(monthLabels, months.map(m=>m.pub),'var(--blue)','Budget pub', months.map(m=>m.cout_par_prospect||0),'var(--orange)','Coût / prospect',{fmtB:v=>v.toLocaleString('fr-FR',{maximumFractionDigits:2})+' €'}) : '<div class="panel-sub">Pas encore assez de mois.</div>';
+
+  const pertesLbl={formulaire:'Au formulaire (aucune réponse)',a_repondu:'Après une 1re réponse',qualifie:'Après qualification',proposition:'Après la proposition',perdu:'Autre'};
+  const pertes=bdData.pertes.slice().sort((a,b)=>b.nb-a.nb).map(r=>({l:pertesLbl[r.libelle]||r.libelle,v:r.nb}));
+  const bestSrc=Math.max(...bdData.sources.filter(s=>s.prospects>=10).map(s=>s.taux_rdv),0);
+
+  return `
+  <div class="card" style="display:flex;align-items:center;gap:16px;margin-bottom:16px;border-color:rgba(226,105,74,0.25);background:linear-gradient(90deg,rgba(226,105,74,0.06),transparent);">
+    <div style="width:36px;height:36px;border-radius:10px;background:rgba(226,105,74,0.12);display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0;">🎯</div>
+    <div style="flex:1;font-size:13.5px;color:var(--text-dim);line-height:1.5;">Sur <b style="color:var(--text)">${fmtNum(f.prospects)}</b> prospects de la pub, <b style="color:var(--text)">${fmtNum(f.rdv)}</b> ont pris un RDV, <b style="color:var(--text)">${fmtNum(f.projets_en_cours)}</b> ont reçu une proposition et <b style="color:var(--text)">${fmtNum(f.devis_envoyes)}</b> ont une pro forma à signer. <b style="color:var(--red)">${crit}</b> alerte${crit>1?'s':''} critique${crit>1?'s':''} et <b style="color:var(--red)">${relances}</b> client${relances>1?'s':''} à relancer en priorité.</div>
+  </div>
+
+  <div class="kpi-grid" style="grid-template-columns:repeat(auto-fit,minmax(150px,1fr));">
+    <div class="card"><div class="kpi-label">Prospects</div><div class="kpi-value" style="font-size:22px;">${fmtNum(f.prospects)}</div><div class="kpi-sub">${fmtNum(f.qualifies)} qualifiés · ${bdFmtPct(bdPct(f.qualifies,f.prospects))}</div></div>
+    <div class="card"><div class="kpi-label">RDV pris</div><div class="kpi-value" style="font-size:22px;">${fmtNum(f.rdv)}</div><div class="kpi-sub">${bdFmtPct(bdPct(f.rdv,f.prospects))} des prospects</div></div>
+    <div class="card"><div class="kpi-label">RDV honorés</div><div class="kpi-value" style="font-size:22px;">${fmtNum(f.rdv_honores)}</div><div class="kpi-sub">${bdFmtPct(presence)} de présence · ${fmtNum(f.rdv_non_honores)} non honorés</div></div>
+    <div class="card"><div class="kpi-label">Projets en cours</div><div class="kpi-value" style="font-size:22px;">${fmtNum(f.projets_en_cours)}</div><div class="kpi-sub">${bdFmtPct(bdPct(f.projets_en_cours,f.rdv))} des RDV · ${fmtNum(f.propositions)} propositions</div></div>
+    <div class="card" style="border-color:rgba(91,130,212,0.35)"><div class="kpi-label">Devis envoyés (pro forma)</div><div class="kpi-value" style="font-size:22px;">${fmtNum(f.devis_envoyes)}</div><div class="kpi-sub">${bdFmtPct(bdPct(f.devis_envoyes,f.projets_en_cours))} des projets · ${fmtEUR(f.montant_devis)}</div></div>
+    <div class="card"><div class="kpi-label">Ventes signées</div><div class="kpi-value" style="font-size:22px;">${fmtNum(f.signes)}</div><div class="kpi-sub">${bdFmtPct(bdPct(f.signes,f.devis_envoyes))} des devis</div></div>
+  </div>
+
+  <div class="kpi-grid" style="grid-template-columns:repeat(auto-fit,minmax(150px,1fr));margin-top:14px;">
+    <div class="card"><div class="kpi-label">Budget pub · ${escapeHtml(moisNom(lastMonth.mois))}</div><div class="kpi-value" style="font-size:20px;">${euro2(lastMonth.pub)}</div></div>
+    <div class="card"><div class="kpi-label">Coût d’un prospect</div><div class="kpi-value" style="font-size:20px;">${euro2(lastMonth.cout_par_prospect)}</div></div>
+    <div class="card"><div class="kpi-label">Coût d’un RDV</div><div class="kpi-value" style="font-size:20px;">${euro2(lastMonth.cout_par_rdv)}</div></div>
+    <div class="card"><div class="kpi-label">Coût d’un projet en cours</div><div class="kpi-value" style="font-size:20px;">${euro2(lastMonth.cout_par_projet)}</div></div>
+    <div class="card"><div class="kpi-label">Coût d’un devis</div><div class="kpi-value" style="font-size:20px;">${euro2(lastMonth.cout_par_devis)}</div></div>
+    <div class="card"><div class="kpi-label">Valeur des projets</div><div class="kpi-value" style="font-size:20px;">${fmtEUR(f.valeur_projets)}</div><div class="kpi-sub">plus haute proposition par client</div></div>
+  </div>
+
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:14px;margin-top:14px;">
+    <div class="card">
+      <div class="panel-title">Où on perd les clients</div>
+      <div class="panel-sub">Taux de passage d’une étape à l’autre. En rouge, l’étape qui fait perdre le plus.</div>
+      ${bdHBars(tunnelRows,(r,i)=>i===worst?'var(--red)':(i>=5?'var(--green)':'var(--blue)'))}
+    </div>
+    <div class="card">
+      <div class="panel-title">Que deviennent les RDV</div>
+      <div class="panel-sub">« Non honoré ou non suivi » : RDV passé sans proposition ni compte rendu — no-show probable, à confirmer avec Philippe.</div>
+      ${bdHBars(issues.map(r=>({l:r.issue,v:r.nb,extra:bdFmtPct(bdPct(r.nb,totIss))})),r=>issueColor(r.l))}
+    </div>
+  </div>
+
+  <div class="card" style="margin-top:14px;">
+    <div class="panel-title">Activité jour par jour</div>
+    <div class="panel-sub">Prospects entrants, RDV pris par le setter, propositions et pro formas envoyées</div>
+    ${dailyChart}
+  </div>
+
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:14px;margin-top:14px;">
+    <div class="card">
+      <div class="panel-title">Budget pub et coût d’un prospect</div>
+      <div class="panel-sub">Par mois</div>
+      ${monthsChart}
+    </div>
+    <div class="card">
+      <div class="panel-title">À quelle étape les perdus décrochent</div>
+      <div class="panel-sub">En rouge, l’étape où partent le plus de prospects</div>
+      ${bdHBars(pertes,(r,i)=>i===0?'var(--red)':'#3a3f4a')}
+    </div>
+  </div>
+
+  <div class="card" style="margin-top:14px;">
+    <div class="panel-title">🚨 Ce qu’il faut corriger dans les process</div>
+    <div class="panel-sub">${bdData.alertes.length} alertes ouvertes · elles se ferment toutes seules quand le problème disparaît</div>
+    <div style="overflow-x:auto"><table class="contracts-table" style="min-width:720px;">
+      <tr><th>Urgence</th><th>Domaine</th><th>Alerte</th><th>Action</th></tr>
+      ${bdData.alertes.map(a=>`<tr><td>${bdPill(a.urgence)}</td><td>${escapeHtml(a.domaine)}</td><td><b>${escapeHtml(a.alerte)}</b>${a.detail?`<div style="color:var(--text-faint);font-size:11.5px;margin-top:2px">${escapeHtml(a.detail)}</div>`:''}</td><td>${escapeHtml(a.action)}</td></tr>`).join('')}
+    </table></div>
+  </div>
+
+  <div class="card" style="margin-top:14px;">
+    <div class="panel-title">📞 Clients à relancer pour signer</div>
+    <div class="panel-sub">Chaque client avec son objection, l’argument et la prochaine action</div>
+    <div style="overflow-x:auto"><table class="contracts-table" style="min-width:860px;">
+      <tr><th>Client</th><th>Urgence</th><th>Situation</th><th style="text-align:right">Montant</th><th style="text-align:right">Jours</th><th>Objections</th><th>Prochaine action</th></tr>
+      ${bdData.vente.map(v=>`<tr><td><b>${escapeHtml(v.client||'—')}</b></td><td>${bdPill(v.urgence)}</td><td>${escapeHtml(v.situation)}</td><td style="text-align:right;white-space:nowrap">${v.montant!=null?fmtEUR(v.montant):'—'}</td><td style="text-align:right">${v.jours!=null?v.jours:'—'}</td><td>${escapeHtml(v.objections||'—')}</td><td>${escapeHtml(v.action)}${v.argument?`<div style="color:var(--text-faint);font-size:11.5px;margin-top:2px">💡 ${escapeHtml(v.argument)}</div>`:''}</td></tr>`).join('')}
+    </table></div>
+  </div>
+
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:14px;margin-top:14px;">
+    <div class="card">
+      <div class="panel-title">Quelle publicité amène des RDV</div>
+      <div class="panel-sub">En vert, la publicité qui transforme le mieux (10 prospects minimum)</div>
+      <table class="contracts-table"><tr><th>Publicité</th><th style="text-align:right">Prospects</th><th style="text-align:right">RDV</th><th style="text-align:right">% RDV</th></tr>
+      ${bdData.sources.map(s=>`<tr><td>${escapeHtml(s.pub)}</td><td style="text-align:right">${fmtNum(s.prospects)}</td><td style="text-align:right">${fmtNum(s.rdv)}</td><td style="text-align:right;${s.taux_rdv===bestSrc&&s.prospects>=10?'color:var(--green);font-weight:700':''}">${bdFmtPct(s.taux_rdv)}</td></tr>`).join('')}
+      </table>
+    </div>
+    <div class="card">
+      <div class="panel-title">Chaque RDV et son issue</div>
+      <div class="panel-sub">Pour repérer les absents et les RDV sans compte rendu</div>
+      <div style="max-height:420px;overflow:auto"><table class="contracts-table"><tr><th>Client</th><th>Date</th><th>Issue</th></tr>
+      ${bdData.rdv.slice().sort((a,b)=>(ORDER.indexOf(a.issue)-ORDER.indexOf(b.issue))||String(b.rdv_date||'').localeCompare(String(a.rdv_date||''))).map(r=>`<tr><td>${escapeHtml(r.client||'—')}</td><td>${bdFmtDate(r.rdv_date)}</td><td><span style="color:${issueColor(r.issue)}">${escapeHtml(r.issue)}</span></td></tr>`).join('')}
+      </table></div>
+    </div>
+  </div>`;
+}
+
 /* ============ SETTER IA (mémoire chiffrée) ============ */
 let setterMetrics=[], setterChanges=[], setterLeads=[], setterState='loading';
 async function loadSetterData(){
@@ -1759,7 +1932,8 @@ async function loadClientScopedData(){
     loadAutomationLogs(),
     loadConnectedSources(),
     loadWhatsAppMetrics(),
-    loadSetterData()
+    loadSetterData(),
+    loadBrasDroit()
   ]);
   render();
 }
@@ -1772,10 +1946,12 @@ async function loadAllDashboardData(){
     loadAutomationLogs(),
     loadConnectedSources(),
     loadWhatsAppMetrics(),
-    loadSetterData()
+    loadSetterData(),
+    loadBrasDroit()
   ]);
   subscribeToDashboardUpdates();
   if(!whatsappPoll) whatsappPoll=setInterval(()=>{if(userRole && !document.hidden) loadWhatsAppMetrics();},60000);
+  if(!window.bdPoll) window.bdPoll=setInterval(()=>{if(userRole && !document.hidden) loadBrasDroit();},300000);
 }
 
 async function initializeDashboard(){
@@ -2197,6 +2373,13 @@ function renderInner(){
     titleEl.textContent="Activité IA";
     subEl.textContent="Automations actives et tâches traitées par l'IA";
     content.innerHTML = renderActivitePage();
+    return;
+  }
+
+  if(currentPage==='brasdroit'){
+    titleEl.textContent="Bras droit";
+    subEl.textContent=activeClientName+" · Tunnel, coûts, RDV, alertes et clients à relancer — prospects de la pub uniquement";
+    content.innerHTML = renderBrasDroitPage();
     return;
   }
 

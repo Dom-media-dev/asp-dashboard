@@ -1258,8 +1258,9 @@ function getRangeData(){
     });
     let grouped=[...buckets.values()].sort((a,b)=>a._date-b._date).map(row=>({
       ...row,
-      roas:row.ads?row.ca/row.ads:0,
-      roi:row.ads?(row.ca-row.ads)/row.ads*100:0,
+      // Rentabilité pub = marge (commissions de Philippe) comparée au budget Ads, pas le CA TTC
+      roas:row.ads?row.marge/row.ads:0,
+      roi:row.ads?(row.marge-row.ads)/row.ads*100:0,
       cpl:row.leads?row.ads/row.leads:0,
       costQualifiedCall:row.qualifiedCalls?row.ads/row.qualifiedCalls:0,
       costDeal:row.deals?row.ads/row.deals:0,
@@ -1292,8 +1293,8 @@ function computeTotals(data){
     deals: data.reduce((s,d)=>s+d.deals,0),
     ia: data.reduce((s,d)=>s+d.ia,0)
   };
-  t.roas = t.ads ? (t.ca/t.ads).toFixed(2) : '0.00';
-  t.roi = t.ads ? ((t.ca-t.ads)/t.ads*100).toFixed(1) : '0.0';
+  t.roas = t.ads ? (t.marge/t.ads).toFixed(2) : '0.00';
+  t.roi = t.ads ? ((t.marge-t.ads)/t.ads*100).toFixed(1) : '0.0';
   t.cpl = t.leads ? Math.round(t.ads/t.leads) : 0;
   t.costQualifiedCall = t.qualifiedCalls ? Math.round(t.ads/t.qualifiedCalls) : 0;
   t.appointmentRate = t.leads ? (t.appointments/t.leads*100).toFixed(1) : '0.0';
@@ -1356,8 +1357,8 @@ async function loadDashboardData(){
       marge,
       margeKnown,
       ads,
-      roas: ads ? ca/ads : 0,
-      roi: ads ? (ca-ads)/ads*100 : 0,
+      roas: ads ? marge/ads : 0,
+      roi: ads ? (marge-ads)/ads*100 : 0,
       leads,
       cpl: leads ? ads/leads : 0,
       qualifiedCalls,
@@ -2678,7 +2679,7 @@ function renderClientOverview(){
       ${big('Chiffre d’affaires généré', fmtEUR(tot.ca||0), tot.deals?(fmtNum(tot.deals)+' vente'+(tot.deals>1?'s':'')+' signée'+(tot.deals>1?'s':'')):'Dès qu’une vente est signée, son montant apparaît ici', tot.ca?'#4fb87a':null)}
       ${big('Marge', tot.margeKnown?fmtEUR(tot.marge):'À renseigner', tot.margeKnown?('Commissions de Philippe'+(tot.ca?' · '+(tot.marge/tot.ca*100).toLocaleString('fr-FR',{maximumFractionDigits:1})+' % du chiffre d’affaires':'')):'Commissions de Philippe sur les ventes signées', tot.margeKnown?'#4fb87a':null)}
       ${big('Panier moyen', tot.deals?fmtEUR(tot.ca/tot.deals):'—', 'Chiffre d’affaires ÷ ventes signées')}
-      ${big('Rapport sur la publicité', (tot.ads&&tot.ca)?(tot.ca/tot.ads).toLocaleString('fr-FR',{maximumFractionDigits:1})+'<span class="kpi-unit">×</span>':'—', (tot.ads&&tot.ca)?('Pour 1 € investi, '+fmtEUR2(tot.ca/tot.ads)+' de chiffre d’affaires'):'Chiffre d’affaires ÷ budget publicitaire')}
+      ${big('Rentabilité de la publicité', (tot.ads&&tot.margeKnown)?(tot.marge/tot.ads).toLocaleString('fr-FR',{maximumFractionDigits:1})+'<span class="kpi-unit">×</span>':'—', (tot.ads&&tot.margeKnown)?('Pour 1 € investi, '+fmtEUR2(tot.marge/tot.ads)+' de marge (commissions de Philippe)'):'Marge ÷ budget publicitaire')}
     </div>
   </div>
 
@@ -2754,8 +2755,8 @@ function renderAcquisitionPage(){
     <div class="card"><div class="kpi-label">Budget Ads total</div><div class="kpi-value" style="font-size:20px;">${fmtEUR(tot.ads)}</div></div>
   </div>
   <div class="kpi-grid" style="margin-top:14px;grid-template-columns:repeat(4,1fr);">
-    <div class="card"><div class="kpi-label">ROAS actuel</div><div class="kpi-value">${last.ca?last.roas.toFixed(2)+'x':'—'}</div></div>
-    <div class="card"><div class="kpi-label">ROI publicitaire</div><div class="kpi-value">${tot.ca?tot.roi+'%':'—'}</div><div class="kpi-sub">${tot.ca?'CA attribué après coût Ads':'Calculé dès la première vente'}</div></div>
+    <div class="card"><div class="kpi-label">ROAS actuel</div><div class="kpi-value">${last.margeKnown?last.roas.toFixed(2)+'x':'—'}</div><div class="kpi-sub">Marge (commissions) ÷ budget Ads</div></div>
+    <div class="card"><div class="kpi-label">ROI publicitaire</div><div class="kpi-value">${tot.margeKnown?tot.roi+'%':'—'}</div><div class="kpi-sub">${tot.margeKnown?'Marge (commissions) après coût Ads':'Calculé dès que la marge d’une vente est connue'}</div></div>
     <div class="card"><div class="kpi-label">Coût par appel qualifié</div><div class="kpi-value">${tot.qualifiedCalls?fmtEUR(tot.costQualifiedCall):'—'}</div><div class="kpi-sub">${tot.qualifiedCalls?tot.qualifiedCalls+' appels qualifiés':'Appels qualifiés pas encore suivis'}</div></div>
     <div class="card"><div class="kpi-label">Taux de prise de RDV</div><div class="kpi-value">${tot.appointmentRate}%</div><div class="kpi-sub">${tot.appointments} rendez-vous</div></div>
   </div>
@@ -2776,9 +2777,9 @@ function renderAcquisitionPage(){
   </div>
 
   <div class="card" style="margin-top:14px;">
-    <div class="panel-title">Budget Ads vs CA généré</div>
-    <div class="panel-sub">Retour sur investissement mensuel</div>
-    ${monthGroupedBarChart(labels, data.map(d=>d.ads),'#5B82D4','Budget Ads', data.map(d=>d.ca),'#4fb87a','CA généré')}
+    <div class="panel-title">Budget Ads vs marge générée</div>
+    <div class="panel-sub">Retour sur investissement mensuel · marge = commissions de Philippe</div>
+    ${monthGroupedBarChart(labels, data.map(d=>d.ads),'#5B82D4','Budget Ads', data.map(d=>d.marge||0),'#4fb87a','Marge générée')}
   </div>
   `;
 }

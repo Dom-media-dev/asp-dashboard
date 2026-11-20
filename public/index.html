@@ -1930,8 +1930,8 @@ async function loadAgencyRollup(){
     return {n:c.name, sub:(c.sector||'')+(c.status?' · '+c.status:''), f:fLabel, setup:fmtEUR(Number(c.setup_fee||0)), m:fmtEUR(Number(c.monthly_fee||0))};
   });
   agency.clients = agency.contracts.length;
-  agency.ca = fmtEUR(commission);
-  agency.panier = deals ? fmtEUR(commission/deals) : '0 €';
+  agency.ca = fmtEUR2(commission);
+  agency.panier = deals ? fmtEUR2(commission/deals) : '0 €';
   const rates=[...new Set(clientsList.map(c=>Number(c.commission_rate||0)))];
   const tc=clientsList.find(c=>c.config&&Array.isArray(c.config.commission_tiers));
   agency.part = (tc && clientsList.length===1) ? tc.config.commission_tiers.map(t=>(Number(t.taux)*100).toLocaleString('fr-FR',{maximumFractionDigits:2})+' %').join(' / ')+' HT' : rates.length===1 ? (rates[0]*100).toLocaleString('fr-FR',{maximumFractionDigits:2})+' % HT' : 'Variable';

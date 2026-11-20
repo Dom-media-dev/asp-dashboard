@@ -1249,9 +1249,9 @@ function getRangeData(){
       const key=daily
         ? `${row._date.getFullYear()}-${String(row._date.getMonth()+1).padStart(2,'0')}-${String(row._date.getDate()).padStart(2,'0')}`
         : `${row._date.getFullYear()}-${String(row._date.getMonth()+1).padStart(2,'0')}`;
-      if(!buckets.has(key)) buckets.set(key,{phase:row.phase,ca:0,ads:0,leads:0,qualifiedCalls:0,appointments:0,attendedAppointments:0,deals:0,pipeline:0,google:0,maint:0,ia:0,_date:row._date});
+      if(!buckets.has(key)) buckets.set(key,{phase:row.phase,ca:0,marge:0,margeKnown:false,ads:0,leads:0,qualifiedCalls:0,appointments:0,attendedAppointments:0,deals:0,pipeline:0,google:0,maint:0,ia:0,_date:row._date});
       const b=buckets.get(key);
-      b.ca+=row.ca; b.ads+=row.ads; b.leads+=row.leads; b.qualifiedCalls+=row.qualifiedCalls;
+      b.ca+=row.ca; b.marge+=(row.marge||0); b.margeKnown=b.margeKnown||row.margeKnown; b.ads+=row.ads; b.leads+=row.leads; b.qualifiedCalls+=row.qualifiedCalls;
       b.appointments+=row.appointments; b.attendedAppointments+=row.attendedAppointments; b.attendedKnown=b.attendedKnown||row.attendedKnown; b.knownAppointments=(b.knownAppointments||0)+(row.knownAppointments||0);
       b.deals+=row.deals; b.ia+=row.ia;
       b.pipeline=row.pipeline; b.google=row.google; b.maint=row.maint; b.phase=row.phase; b._date=row._date;
@@ -1280,6 +1280,8 @@ function getRangeData(){
 function computeTotals(data){
   const t = {
     ca: data.reduce((s,d)=>s+d.ca,0),
+    marge: data.reduce((s,d)=>s+(d.marge||0),0),
+    margeKnown: data.some(d=>d.margeKnown),
     ads: data.reduce((s,d)=>s+d.ads,0),
     leads: data.reduce((s,d)=>s+d.leads,0),
     qualifiedCalls: data.reduce((s,d)=>s+(d.qualifiedCalls||0),0),
@@ -1345,10 +1347,14 @@ async function loadDashboardData(){
     const attendedKnown = row.attended_appointments!==null && row.attended_appointments!==undefined && Number(row.appointments||0)>0;
     const attendedAppointments = attendedKnown ? Number(row.attended_appointments) : 0;
     const deals = Number(row.deals || 0);
+    const margeKnown = row.marge!==null && row.marge!==undefined;
+    const marge = margeKnown ? Number(row.marge) : 0;
     return {
       _date:new Date(row.periode+'T00:00:00'),
       phase: row.phase || 'setup',
       ca,
+      marge,
+      margeKnown,
       ads,
       roas: ads ? ca/ads : 0,
       roi: ads ? (ca-ads)/ads*100 : 0,
@@ -2662,8 +2668,9 @@ function renderClientOverview(){
   <div class="card" style="margin-top:14px;">
     <div class="panel-title">Chiffre d’affaires</div>
     <div class="panel-sub">Ventes signées sur la période, et ce qu’elles rapportent par rapport au budget publicitaire</div>
-    <div class="kpi-grid kpi-grid-3" style="margin-top:12px;margin-bottom:0;">
+    <div class="kpi-grid" style="margin-top:12px;margin-bottom:0;">
       ${big('Chiffre d’affaires généré', fmtEUR(tot.ca||0), tot.deals?(fmtNum(tot.deals)+' vente'+(tot.deals>1?'s':'')+' signée'+(tot.deals>1?'s':'')):'Dès qu’une vente est signée, son montant apparaît ici', tot.ca?'#4fb87a':null)}
+      ${big('Marge', tot.margeKnown?fmtEUR(tot.marge):'À renseigner', tot.margeKnown?('Commissions de Philippe'+(tot.ca?' · '+(tot.marge/tot.ca*100).toLocaleString('fr-FR',{maximumFractionDigits:1})+' % du chiffre d’affaires':'')):'Commissions de Philippe sur les ventes signées', tot.margeKnown?'#4fb87a':null)}
       ${big('Panier moyen', tot.deals?fmtEUR(tot.ca/tot.deals):'—', 'Chiffre d’affaires ÷ ventes signées')}
       ${big('Rapport sur la publicité', (tot.ads&&tot.ca)?(tot.ca/tot.ads).toLocaleString('fr-FR',{maximumFractionDigits:1})+'<span class="kpi-unit">×</span>':'—', (tot.ads&&tot.ca)?('Pour 1 € investi, '+fmtEUR2(tot.ca/tot.ads)+' de chiffre d’affaires'):'Chiffre d’affaires ÷ budget publicitaire')}
     </div>
@@ -2678,8 +2685,8 @@ function renderClientOverview(){
   <div class="card" style="margin-top:14px;">
     <div class="panel-title">Le mois en détail</div>
     <div style="overflow-x:auto;">
-    <table class="contracts-table" style="min-width:640px;">
-      <thead><tr><th>Mois</th><th>Investi en pub</th><th>Demandes reçues</th><th>Coût d’une demande</th><th>Rendez-vous</th><th>Coût d’un rendez-vous</th><th>${escapeHtml(saleLabel())}</th><th>Chiffre d’affaires</th></tr></thead>
+    <table class="contracts-table" style="min-width:720px;">
+      <thead><tr><th>Mois</th><th>Investi en pub</th><th>Demandes reçues</th><th>Coût d’une demande</th><th>Rendez-vous</th><th>Coût d’un rendez-vous</th><th>${escapeHtml(saleLabel())}</th><th>Chiffre d’affaires</th><th>Marge</th></tr></thead>
       <tbody>
         ${data.map((d,i)=>`
           <tr>
@@ -2691,6 +2698,7 @@ function renderClientOverview(){
             <td>${d.appointments?fmtEUR2(d.ads/d.appointments):'—'}</td>
             <td>${d.deals}</td>
             <td>${fmtEUR(d.ca||0)}</td>
+            <td>${d.margeKnown?fmtEUR(d.marge):(d.deals?'À renseigner':'—')}</td>
           </tr>`).slice().reverse().join('')}
       </tbody>
     </table>

@@ -1911,13 +1911,13 @@ async function loadClients(){
   if(userRole==='agence') await loadAgencyRollup();
 }
 async function loadAgencyRollup(){
-  const {data,error}=await supabaseClient.from('dashboard_metrics').select('client,periode,ca,deals');
+  const {data,error}=await supabaseClient.from('dashboard_metrics').select('client,periode,ca,deals,base_commission_ht');
   if(error){ console.error('Erreur synthèse agence :',error); return; }
   let commission=0, deals=0, monthly=0, setup=0;
   agency.contracts = clientsList.filter(c=>c.status!=='archivé').map(c=>{
     const start=c.config&&c.config.start_date;
     const rows=(data||[]).filter(r=>r.client===c.name && (!start || r.periode>=start));
-    const ca=rows.reduce((s,r)=>s+Number(r.ca||0),0);
+    const ca=rows.reduce((s,r)=>s+Number(r.base_commission_ht||0),0); // base = prix véhicule HT des ventes signées
     const d=rows.reduce((s,r)=>s+Number(r.deals||0),0);
     const rate=Number(c.commission_rate||0);
     commission+=ca*rate; deals+=d; monthly+=Number(c.monthly_fee||0); setup+=Number(c.setup_fee||0);

@@ -1920,14 +1920,20 @@ async function loadAgencyRollup(){
     const ca=rows.reduce((s,r)=>s+Number(r.base_commission_ht||0),0); // base = prix véhicule HT des ventes signées
     const d=rows.reduce((s,r)=>s+Number(r.deals||0),0);
     const rate=Number(c.commission_rate||0);
-    commission+=ca*rate; deals+=d; monthly+=Number(c.monthly_fee||0); setup+=Number(c.setup_fee||0);
-    return {n:c.name, sub:(c.sector||'')+(c.status?' · '+c.status:''), f:(rate*100).toLocaleString('fr-FR',{maximumFractionDigits:2})+' % HT', setup:fmtEUR(Number(c.setup_fee||0)), m:fmtEUR(Number(c.monthly_fee||0))};
+    const tiers=(c.config&&Array.isArray(c.config.commission_tiers))?c.config.commission_tiers:null;
+    // Paliers mensuels : le taux dépend du nombre de véhicules vendus dans le mois
+    const tierRate=n=>{ if(!tiers||!n) return rate; const t=tiers.find(t=>n>=Number(t.min_vehicules||0)&&(t.max_vehicules==null||n<=Number(t.max_vehicules))); return t?Number(t.taux):rate; };
+    const comm=tiers ? rows.reduce((s,r)=>s+Number(r.base_commission_ht||0)*tierRate(Number(r.deals||0)),0) : ca*rate;
+    commission+=comm; deals+=d; monthly+=Number(c.monthly_fee||0); setup+=Number(c.setup_fee||0);
+    const fLabel=tiers ? tiers.map(t=>(Number(t.taux)*100).toLocaleString('fr-FR',{maximumFractionDigits:2})+' %').join(' / ')+' HT (paliers)' : (rate*100).toLocaleString('fr-FR',{maximumFractionDigits:2})+' % HT';
+    return {n:c.name, sub:(c.sector||'')+(c.status?' · '+c.status:''), f:fLabel, setup:fmtEUR(Number(c.setup_fee||0)), m:fmtEUR(Number(c.monthly_fee||0))};
   });
   agency.clients = agency.contracts.length;
   agency.ca = fmtEUR(commission);
   agency.panier = deals ? fmtEUR(commission/deals) : '0 €';
   const rates=[...new Set(clientsList.map(c=>Number(c.commission_rate||0)))];
-  agency.part = rates.length===1 ? (rates[0]*100).toLocaleString('fr-FR',{maximumFractionDigits:2})+' % HT' : 'Variable';
+  const tc=clientsList.find(c=>c.config&&Array.isArray(c.config.commission_tiers));
+  agency.part = (tc && clientsList.length===1) ? tc.config.commission_tiers.map(t=>(Number(t.taux)*100).toLocaleString('fr-FR',{maximumFractionDigits:2})+' %').join(' / ')+' HT' : rates.length===1 ? (rates[0]*100).toLocaleString('fr-FR',{maximumFractionDigits:2})+' % HT' : 'Variable';
   agency.monthly = fmtEUR(monthly); agency.setup = fmtEUR(setup);
   render();
 }
